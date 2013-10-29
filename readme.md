@@ -25,10 +25,11 @@ This section is only relevant if you are *serializing and deserializing typed
 objects*.
 
 The `SerializationContext` isolates different serialization domains to prevent
-attacks from untrusted servers and prevents issues related to two distinct
-objects from different domains having the same network type name (eg, a
-`ServiceStatus` object from a video streaming service vs. a `ServiceStatus`
-object from a data service).
+attacks from untrusted servers. It also negates issues that occur when there
+is only a single global context: if two different domains (eg, twitch.tv and
+astralfoxy.com) both have `ServiceStatus` objects, then it would be impossible
+to tell which one to use. The `SerializationContext` allows us to specify
+different objects for each context.
 
 ```csharp
 // method one: specify the types in the constructor
@@ -42,15 +43,19 @@ By default, the serialization context will deserialize unregistered objects to
 anonymous types; if you have an empty context, all objects will be
 deserialized to anonymous types.
 
-So if you don't need statically typed objects, you can use dynamic objects for all objects instead:
+If you don't need statically typed objects, you can use dynamic objects for
+all objects instead:
+
 
 ```csharp
-dynamic d = client.InvokeAsync<dynamic>(...)
+dynamic d = await client.InvokeAsync<dynamic>(...)
 ```
 
 #### Object annotations
 
-By default, `rtmp-sharp` uses an object's CLR type names and field names for serialization. You can change this behaviour by annotating the desired class or field.
+By default, `rtmp-sharp` uses an CLR type and field names for serialization.
+If you need to use a different type name on the network, you can annotate your
+code with the `SerializedName` attribute.
 
 ```csharp
 namespace Client
@@ -77,7 +82,7 @@ namespace Client
 When time allows, I'll fix these.
 
 - `rtmp-sharp` spawns two threads per `RtmpClient` - a reader and writer thread
-- shared objects aren't implemented
+- flash shared objects aren't implemented
 - video and audio decoding isn't implemented
 
 ## License

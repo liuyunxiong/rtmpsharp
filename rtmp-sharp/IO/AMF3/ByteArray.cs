@@ -17,12 +17,11 @@ namespace RtmpSharp.IO.AMF3
             Zlib
         }
 
-        SerializationContext SerializationContext { get; set; }
-
-        MemoryStream memoryStream;
-        DataOutput dataOutput;
         DataInput dataInput;
+        DataOutput dataOutput;
+        MemoryStream memoryStream;
         ObjectEncoding objectEncoding = ObjectEncoding.Amf3;
+        SerializationContext serializationContext;
 
         public ByteArray()
         {
@@ -32,12 +31,12 @@ namespace RtmpSharp.IO.AMF3
 
         public ByteArray(SerializationContext serializationContext) : this()
         {
-            SerializationContext = serializationContext;
+            this.serializationContext = serializationContext;
         }
 
         public ByteArray(MemoryStream ms, SerializationContext serializationContext)
         {
-            SerializationContext = serializationContext;
+            this.serializationContext = serializationContext;
 
             memoryStream = ms;
             ReloadStreams();
@@ -45,7 +44,7 @@ namespace RtmpSharp.IO.AMF3
 
         public ByteArray(byte[] buffer, SerializationContext serializationContext)
         {
-            SerializationContext = serializationContext;
+            this.serializationContext = serializationContext;
 
             memoryStream = new MemoryStream(buffer);
             ReloadStreams();
@@ -53,8 +52,8 @@ namespace RtmpSharp.IO.AMF3
 
         void ReloadStreams()
         {
-            dataOutput = new DataOutput(new AmfWriter(memoryStream, SerializationContext, objectEncoding));
-            dataInput = new DataInput(new AmfReader(memoryStream, SerializationContext, true, true));
+            dataOutput = new DataOutput(new AmfWriter(memoryStream, serializationContext, objectEncoding));
+            dataInput = new DataInput(new AmfReader(memoryStream, serializationContext, true, true));
         }
 
         public uint Length { get { return (uint)memoryStream.Length; } }
@@ -109,8 +108,8 @@ namespace RtmpSharp.IO.AMF3
                 stream.Write(buffer, 0, buffer.Length);
 
             memoryStream = ms;
-            dataOutput = new DataOutput(new AmfWriter(memoryStream, SerializationContext));
-            dataInput = new DataInput(new AmfReader(memoryStream, SerializationContext));
+            dataOutput = new DataOutput(new AmfWriter(memoryStream, serializationContext));
+            dataInput = new DataInput(new AmfReader(memoryStream, serializationContext));
         }
 
         public void Inflate()
@@ -147,8 +146,8 @@ namespace RtmpSharp.IO.AMF3
             memoryStream.Dispose();
             memoryStream = ms;
             memoryStream.Position = 0;
-            dataOutput = new DataOutput(new AmfWriter(memoryStream, SerializationContext));
-            dataInput = new DataInput(new AmfReader(memoryStream, SerializationContext));
+            dataOutput = new DataOutput(new AmfWriter(memoryStream, serializationContext));
+            dataInput = new DataInput(new AmfReader(memoryStream, serializationContext));
         }
 
         #region IDataInput Members

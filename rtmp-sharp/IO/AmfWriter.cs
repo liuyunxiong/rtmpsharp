@@ -50,6 +50,8 @@ namespace RtmpSharp.IO
 
         static readonly AmfWriterMap Amf0Writers;
         static readonly AmfWriterMap Amf3Writers;
+        
+        public SerializationContext SerializationContext { get; private set; }
 
         readonly BinaryWriter underlying;
         readonly ObjectEncoding objectEncoding;
@@ -60,47 +62,66 @@ namespace RtmpSharp.IO
 
         static AmfWriter()
         {
-            var smallIntTypes = new[] { typeof(SByte), typeof(Byte), typeof(Int16), typeof(UInt16), typeof(Int32), typeof(UInt32) };
-            var bigOrFloatingTypes = new[] { typeof(Int64), typeof(UInt64), typeof(Single), typeof(Double), typeof(Decimal) };
+            var smallIntTypes = new[]
+            {
+                typeof(SByte),
+                typeof(Byte),
+                typeof(Int16),
+                typeof(UInt16),
+                typeof(Int32),
+                typeof(UInt32)
+            };
+            
+            var bigOrFloatingTypes = new[]
+            {
+                typeof(Int64),
+                typeof(UInt64),
+                typeof(Single),
+                typeof(Double),
+                typeof(Decimal)
+            };
 
             Amf0Writers = new AmfWriterMap(new Amf0ObjectWriter())
             {
-                { typeof(Array), new Amf0ArrayWriter() },
-                { typeof(AsObject), new Amf0AsObjectWriter() },
-                { typeof(bool), new Amf0BooleanWriter() },
-                { typeof(char), new Amf0CharWriter() },
-                { typeof(DateTime), new Amf0DateTimeWriter() },
-                { typeof(Enum), new Amf0EnumWriter() },
-                { typeof(Guid), new Amf0GuidWriter() },
-                { typeof(string), new Amf0StringWriter() },
-                { typeof(XDocument), new Amf0XDocumentWriter() },
-                { typeof(XElement), new Amf0XElementWriter() },
+                { typeof(Array),        new Amf0ArrayWriter() },
+                { typeof(AsObject),     new Amf0AsObjectWriter() },
+                { typeof(bool),         new Amf0BooleanWriter() },
+                { typeof(char),         new Amf0CharWriter() },
+                { typeof(DateTime),     new Amf0DateTimeWriter() },
+                { typeof(Enum),         new Amf0EnumWriter() },
+                { typeof(Guid),         new Amf0GuidWriter() },
+                { typeof(string),       new Amf0StringWriter() },
+                { typeof(XDocument),    new Amf0XDocumentWriter() },
+                { typeof(XElement),     new Amf0XElementWriter() },
             };
+
             var amf0NumberWriter = new Amf0NumberWriter();
             foreach (var type in smallIntTypes.Concat(bigOrFloatingTypes))
                 Amf0Writers.Add(type, amf0NumberWriter);
 
             Amf3Writers = new AmfWriterMap(new Amf3ObjectWriter())
             {
-                { typeof(Array), new Amf3ArrayWriter() },
-                { typeof(AsObject), new Amf3AsObjectWriter() },
-                { typeof(bool), new Amf3BooleanWriter() },
-                { typeof(ByteArray), new Amf3ByteArrayWriter() },
-                { typeof(char), new Amf3CharWriter() },
-                { typeof(DateTime), new Amf3DateTimeWriter() },
-                { typeof(Enum), new Amf3EnumWriter() },
-                { typeof(Guid), new Amf3GuidWriter() },
-                { typeof(string), new Amf3StringWriter() },
-                { typeof(XDocument), new Amf3XDocumentWriter() },
-                { typeof(XElement), new Amf3XElementWriter() },
-                { typeof(byte[]), new Amf3NativeByteArrayWriter() },
+                { typeof(Array),        new Amf3ArrayWriter() },
+                { typeof(AsObject),     new Amf3AsObjectWriter() },
+                { typeof(bool),         new Amf3BooleanWriter() },
+                { typeof(ByteArray),    new Amf3ByteArrayWriter() },
+                { typeof(char),         new Amf3CharWriter() },
+                { typeof(DateTime),     new Amf3DateTimeWriter() },
+                { typeof(Enum),         new Amf3EnumWriter() },
+                { typeof(Guid),         new Amf3GuidWriter() },
+                { typeof(string),       new Amf3StringWriter() },
+                { typeof(XDocument),    new Amf3XDocumentWriter() },
+                { typeof(XElement),     new Amf3XElementWriter() },
+                { typeof(byte[]),       new Amf3NativeByteArrayWriter() },
 
                 // `IDictionary`s are handled in the object writer
             };
+
             var amf3IntWriter = new Amf3IntWriter();
-            var amf3FloatingWriter = new Amf3DoubleWriter();
             foreach (var type in smallIntTypes)
                 Amf3Writers.Add(type, amf3IntWriter);
+
+            var amf3FloatingWriter = new Amf3DoubleWriter();
             foreach (var type in bigOrFloatingTypes)
                 Amf3Writers.Add(type, amf3FloatingWriter);
         }
@@ -115,20 +136,18 @@ namespace RtmpSharp.IO
             var createVectorObjectWriter = new Func<bool, IAmfItemWriter>(isFixed => new Amf3VectorWriter<object>(Amf3TypeMarkers.VectorInt, (writer, list) => writer.WriteAmf3Vector<object>(true, isFixed, list, writer.WriteAmf3Item)));
             var amf3Flash10Writers = new Dictionary<Type, IAmfItemWriter>
             {
-                { typeof(int[]), createVectorIntWriter(true) },
-                { typeof(List<int>), createVectorIntWriter(false) },
-                { typeof(uint[]), createVectorUIntWriter(true) },
-                { typeof(List<uint>), createVectorUIntWriter(false) },
-                { typeof(double[]), createVectorDoubleWriter(true) },
-                { typeof(List<double>), createVectorDoubleWriter(false) },
-                { typeof(object[]), createVectorObjectWriter(true) },
-                { typeof(List<object>), createVectorObjectWriter(false) },
+                { typeof(int[]),         createVectorIntWriter(true) },
+                { typeof(List<int>),     createVectorIntWriter(false) },
+                { typeof(uint[]),        createVectorUIntWriter(true) },
+                { typeof(List<uint>),    createVectorUIntWriter(false) },
+                { typeof(double[]),      createVectorDoubleWriter(true) },
+                { typeof(List<double>),  createVectorDoubleWriter(false) },
+                { typeof(object[]),      createVectorObjectWriter(true) },
+                { typeof(List<object>),  createVectorObjectWriter(false) },
             };
             foreach (var pair in amf3Flash10Writers)
                 Amf3Writers[pair.Key] = pair.Value;
         }
-
-        public SerializationContext SerializationContext { get; private set; }
 
         public AmfWriter(Stream stream, SerializationContext serializationContext) : this(stream, serializationContext, ObjectEncoding.Amf3)
         {

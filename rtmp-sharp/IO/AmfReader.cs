@@ -13,13 +13,14 @@ namespace RtmpSharp.IO
 {
     public class AmfReader : IDisposable
     {
+        public SerializationContext SerializationContext { get; private set; }
+        
         // Whether to deserialize to the typed object (if it exists) or a dynamic object
         public bool DeserializeToObjects { get; set; }
         // Whether to deserialize to a dynamic object when instructed to deserialize to a typed object and the type cannot found
         public bool DeserializeToDynamicWhenTypeNotFound { get; set; }
 
         readonly BinaryReader underlying;
-
         readonly List<object> amf0ObjectReferences;
         readonly List<object> amf3ObjectReferences;
         readonly List<object> stringReferences;
@@ -57,6 +58,7 @@ namespace RtmpSharp.IO
             r => r.ReadAmf0Object(),                                      // 0x10 - typed object
             r => r.ReadAmf3Item()                                         // 0x11 - avmplus object
         };
+
         static readonly List<Func<AmfReader, object>> Amf3TypeReaders = new List<Func<AmfReader, object>>
         {
             r => null,                                                    // 0x00 - undefined
@@ -80,9 +82,10 @@ namespace RtmpSharp.IO
         };
 
 
-        public SerializationContext SerializationContext { get; private set; }
+        public AmfReader(Stream stream, SerializationContext serializationContext) : this(stream, serializationContext, true, false)
+        {
+        }
 
-        public AmfReader(Stream stream, SerializationContext serializationContext) : this(stream, serializationContext, true, false) { }
         public AmfReader(Stream stream, SerializationContext serializationContext, bool deserializeToObjects, bool deserializeToDynamicWhenTypeNotFound)
         {
             underlying = new BinaryReader(stream);

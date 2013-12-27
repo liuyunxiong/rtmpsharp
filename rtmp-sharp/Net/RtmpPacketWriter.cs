@@ -1,4 +1,5 @@
-﻿using RtmpSharp.IO;
+﻿using Complete;
+using RtmpSharp.IO;
 using RtmpSharp.Messaging;
 using RtmpSharp.Messaging.Events;
 using System;
@@ -15,7 +16,7 @@ namespace RtmpSharp.Net
     {
         public bool Continue { get; set; }
 
-        public event EventHandler Disconnected;
+        public event EventHandler<ExceptionalEventArgs> Disconnected;
 
         readonly AmfWriter writer;
         readonly Dictionary<int, RtmpHeader> rtmpHeaders;
@@ -41,7 +42,7 @@ namespace RtmpSharp.Net
             Continue = true;
         }
 
-        void OnDisconnected(EventArgs e)
+        void OnDisconnected(ExceptionalEventArgs e)
         {
             Continue = false;
 
@@ -63,8 +64,16 @@ namespace RtmpSharp.Net
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.Print("Exception: {0} at {1}", ex.ToString(), ex.StackTrace);
-                OnDisconnected(new EventArgs());
+#if DEBUG
+                System.Diagnostics.Debug.Print("Exception: {0} at {1}", ex, ex.StackTrace);
+                if (ex.InnerException != null)
+                {
+                    var inner = ex.InnerException;
+                    System.Diagnostics.Debug.Print("InnerException: {0} at {1}", inner, inner.StackTrace);
+                }
+#endif
+
+                OnDisconnected(new ExceptionalEventArgs("rtmp-packet-writer", ex));
             }
         }
 

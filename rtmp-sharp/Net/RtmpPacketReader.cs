@@ -1,4 +1,5 @@
-﻿using RtmpSharp.IO;
+﻿using Complete;
+using RtmpSharp.IO;
 using RtmpSharp.Messaging;
 using RtmpSharp.Messaging.Events;
 using System;
@@ -16,7 +17,7 @@ namespace RtmpSharp.Net
         public bool Continue { get; set; }
 
         public event EventHandler<EventReceivedEventArgs> EventReceived;
-        public event EventHandler Disconnected;
+        public event EventHandler<ExceptionalEventArgs> Disconnected;
 
         AmfReader reader;
 
@@ -43,7 +44,7 @@ namespace RtmpSharp.Net
                 EventReceived(this, e);
         }
 
-        void OnDisconnected(EventArgs e)
+        void OnDisconnected(ExceptionalEventArgs e)
         {
             if (Disconnected != null)
                 Disconnected(this, e);
@@ -90,13 +91,16 @@ namespace RtmpSharp.Net
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.Print("Exception: {0} at {1}", ex.ToString(), ex.StackTrace);
+#if DEBUG
+                System.Diagnostics.Debug.Print("Exception: {0} at {1}", ex, ex.StackTrace);
                 if (ex.InnerException != null)
                 {
                     var inner = ex.InnerException;
-                    System.Diagnostics.Debug.Print("InnerException: {0} at {1}", inner.ToString(), inner.StackTrace);
+                    System.Diagnostics.Debug.Print("InnerException: {0} at {1}", inner, inner.StackTrace);
                 }
-                OnDisconnected(new EventArgs());
+#endif
+
+                OnDisconnected(new ExceptionalEventArgs("rtmp-packet-reader", ex));
             }
         }
 
@@ -168,7 +172,7 @@ namespace RtmpSharp.Net
                     header.IsTimerRelative = previousHeader.IsTimerRelative;
                     break;
                 default:
-                    throw new SerializationException("Unexpected header size.");
+                    throw new SerializationException("Unexpected header type: " + (int)chunkMessageHeaderType);
             }
 
             // extended timestamp
@@ -239,11 +243,11 @@ namespace RtmpSharp.Net
                     });
 
 
-                // Only seems to be used in audio and video streams, so we should be OK until we decide to implement aggregate packets.
-                case MessageType.Aggregate:
-                    throw new ArgumentOutOfRangeException("Unknown RTMP message type: " + (int)packet.Header.MessageType);
+                // Aggregated messages only seem to be used in audio and video streams, so we should be OK until we need multimedia.
+                // case MessageType.Aggregate:
+
                 default:
-#if DEBUG
+#if DEBUG && RTMP_SHARP_DEV
                     // Find out how to handle this message type.
                     System.Diagnostics.Debugger.Break();
 #endif

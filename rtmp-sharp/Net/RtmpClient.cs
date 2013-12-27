@@ -1,4 +1,5 @@
-﻿using Complete.Threading;
+﻿using Complete;
+using Complete.Threading;
 using RtmpSharp.IO;
 using RtmpSharp.Messaging;
 using RtmpSharp.Messaging.Events;
@@ -82,7 +83,7 @@ namespace RtmpSharp.Net
 
 
 
-        void OnDisconnected(EventArgs e)
+        void OnDisconnected(ExceptionalEventArgs e)
         {
             if (Interlocked.Increment(ref disconnectsFired) > 1)
                 return;
@@ -99,13 +100,14 @@ namespace RtmpSharp.Net
                     Disconnected(this, e);
             });
 
-            WrapCallback(() => callbackManager.SetExceptionForAll(new ClientDisconnectedException()));
+            WrapCallback(() => callbackManager.SetExceptionForAll(
+                new ClientDisconnectedException(e.Description, e.Exception)));
         }
 
         Task<object> QueueCommandAsTask(Command command, int streamId, int messageStreamId)
         {
             if (disconnectsFired != 0)
-                return CreateExceptedTask(new ClientDisconnectedException());
+                return CreateExceptedTask(new ClientDisconnectedException("disconnected"));
 
             var task = callbackManager.Create(command.InvokeId);
             writer.Queue(command, streamId, messageStreamId);
@@ -179,7 +181,7 @@ namespace RtmpSharp.Net
 
         public void Close()
         {
-            OnDisconnected(new EventArgs());
+            OnDisconnected(new ExceptionalEventArgs("disconnected"));
         }
 
         TcpClient CreateTcpClient()
@@ -205,7 +207,7 @@ namespace RtmpSharp.Net
             }
         }
 
-        void OnPacketProcessorDisconnected(object sender, EventArgs args)
+        void OnPacketProcessorDisconnected(object sender, ExceptionalEventArgs args)
         {
             OnDisconnected(args);
         }

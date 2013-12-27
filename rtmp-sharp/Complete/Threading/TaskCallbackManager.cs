@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 
+// astralfoxy:complete/threading/taskcallbackmanager.cs
 namespace Complete.Threading
 {
     class TaskCallbackManager<K, V>

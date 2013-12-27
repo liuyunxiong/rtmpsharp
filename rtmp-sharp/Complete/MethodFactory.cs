@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
+// astralfoxy:complete/methodfactory.cs
 namespace Complete
 {
     // thread-safe.

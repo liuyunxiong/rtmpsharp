@@ -1,5 +1,6 @@
 ﻿using System;
 
+// astralfoxy:complete/io/zlib/adler32.cs
 namespace Complete.IO.Zlib
 {
     // Implemented adapted from zlib's `adler32.c` (zlib 0.71)

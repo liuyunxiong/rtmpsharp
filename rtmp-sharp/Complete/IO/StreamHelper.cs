@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
+// astralfoxy:complete/io/streamhelper.cs
 namespace Complete.IO
 {
     static class StreamHelper

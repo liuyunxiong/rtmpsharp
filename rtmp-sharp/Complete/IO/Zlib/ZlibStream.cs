@@ -5,12 +5,13 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
+// astralfoxy:complete/io/zlib/zlibstream.cs
 namespace Complete.IO.Zlib
 {
     // Implements a subset of the `zlib` format:
     //     - only `deflate` is supported
-    //     - preset dictionaries are not supported
-    class ZlibStream : DeflateStream
+    //     - preset dictionaries are not supported; we pretend they don't exist
+    public class ZlibStream : DeflateStream
     {
         static readonly byte[] ZlibHeader = new byte[] { 0x58, 0x85 };
 
@@ -42,7 +43,7 @@ namespace Complete.IO.Zlib
         {
             // The zlib format is specified by RFC 1950. Zlib also uses deflate, plus 2 or 6 header bytes, and a 4 byte checksum at the end. 
             // The first 2 bytes indicate the compression method and flags. If the dictionary flag is set, then 4 additional bytes will follow.
-            // Preset dictionaries aren't very common and we don't support them.
+            // OHGOD: Preset dictionaries aren't very common; pretend they don't exist.
             if (firstReadWrite)
             {
                 firstReadWrite = false;

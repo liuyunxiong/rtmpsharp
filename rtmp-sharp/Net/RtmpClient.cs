@@ -203,7 +203,7 @@ namespace RtmpSharp.Net
                     await ssl.AuthenticateAsClientAsync(uri.Host);
                     return ssl;
                 default:
-                    throw new ArgumentOutOfRangeException("uri.Scheme");
+                    throw new ArgumentException("The specified scheme is not supported.");
             }
         }
 
@@ -274,9 +274,9 @@ namespace RtmpSharp.Net
                     else
                     {
 #if DEBUG
+                        System.Diagnostics.Debug.Print("Unknown RTMP Command: " + call.Name);
                         System.Diagnostics.Debugger.Break();
 #endif
-                        throw new InvalidOperationException("Unknown command name: " + call.Name);
                     }
                     break;
             }
@@ -448,7 +448,7 @@ namespace RtmpSharp.Net
 
         int GetNextInvokeId()
         {
-            // this method wraps overflows
+            // interlocked.increment wraps overflows
             return Interlocked.Increment(ref invokeId);
         }
 

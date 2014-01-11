@@ -104,9 +104,9 @@ namespace RtmpSharp.Net
                 new ClientDisconnectedException(e.Description, e.Exception)));
         }
 
-        Task<object> QueueCommandAsTask(Command command, int streamId, int messageStreamId)
+        Task<object> QueueCommandAsTask(Command command, int streamId, int messageStreamId, bool requireConnected = false)
         {
-            if (disconnectsFired != 0)
+            if (requireConnected && IsDisconnected)
                 return CreateExceptedTask(new ClientDisconnectedException("disconnected"));
 
             var task = callbackManager.Create(command.InvokeId);
@@ -363,7 +363,7 @@ namespace RtmpSharp.Net
                 },
                 InvokeId = GetNextInvokeId()
             };
-            return (AsObject)await QueueCommandAsTask(connect, 3, 0);
+            return (AsObject)await QueueCommandAsTask(connect, 3, 0, requireConnected: true);
         }
 
         public async Task<bool> SubscribeAsync(string endpoint, string destination, string subtopic, string clientId)

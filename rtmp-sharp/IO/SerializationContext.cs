@@ -73,7 +73,7 @@ namespace RtmpSharp.IO
 
         DeserializationStrategy GetFallbackDeserializationStrategy()
         {
-            return fallbackStrategy.HasFlag(FallbackStrategy.DynamicObject)
+            return fallbackStrategy == FallbackStrategy.DynamicObject
                 ? DeserializationStrategy.DynamicObject
                 : DeserializationStrategy.Exception;
         }

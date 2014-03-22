@@ -1,8 +1,5 @@
-﻿using System;
-
-namespace RtmpSharp.IO
+﻿namespace RtmpSharp.IO
 {
-    [Flags]
     public enum FallbackStrategy
     {
         DynamicObject,

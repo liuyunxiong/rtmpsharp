@@ -94,6 +94,8 @@
     <Compile Include="IO\AmfWriter.cs" />
     <Compile Include="IO\AsObject.cs" />
     <Compile Include="IO\ClassDescription.cs" />
+    <Compile Include="IO\DeserializationStrategy.cs" />
+    <Compile Include="IO\FallbackStrategy.cs" />
     <Compile Include="IO\IAmfItemWriter.cs" />
     <Compile Include="IO\IObjectWrapper.cs" />
     <Compile Include="IO\MiniTypeConverter.cs" />

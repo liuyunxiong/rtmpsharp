@@ -77,7 +77,7 @@ namespace RtmpSharp.IO.ObjectWrappers
                 classMembers.Add(classMember);
             }
 
-            var typeName = serializationContext.SerializerObjectFactory.GetAlias(type.FullName);
+            var typeName = serializationContext.GetAlias(type.FullName);
             return new BasicObjectClassDescription(typeName, classMembers.Cast<IMemberWrapper>().ToArray(), GetIsExternalizable(obj), GetIsDynamic(obj));
         }
 

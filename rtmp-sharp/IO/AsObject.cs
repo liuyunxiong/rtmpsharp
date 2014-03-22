@@ -151,7 +151,7 @@ namespace RtmpSharp.IO
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             var instance = MethodFactory.CreateInstance(destinationType);
-            var classDescription = serializationContext.ObjectWrapperFactory.GetClassDescription(destinationType, instance);
+            var classDescription = serializationContext.GetClassDescription(destinationType, instance);
             var source = value as IDictionary<string, object>;
             if (source != null)
             {

@@ -53,7 +53,7 @@ namespace RtmpSharp.IO.AMF3
         void ReloadStreams()
         {
             dataOutput = new DataOutput(new AmfWriter(memoryStream, serializationContext, objectEncoding));
-            dataInput = new DataInput(new AmfReader(memoryStream, serializationContext, true, true));
+            dataInput = new DataInput(new AmfReader(memoryStream, serializationContext));
         }
 
         public uint Length { get { return (uint)memoryStream.Length; } }
@@ -77,7 +77,7 @@ namespace RtmpSharp.IO.AMF3
         {
             return memoryStream.GetBuffer();
         }
-
+        
         // Returns a byte[] of the current ByteArray from start to end, without regard for the current stream position
         public byte[] ToArray()
         {

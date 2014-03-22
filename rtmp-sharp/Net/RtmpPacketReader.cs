@@ -185,7 +185,7 @@ namespace RtmpSharp.Net
         RtmpEvent ParsePacket(RtmpPacket packet, Func<AmfReader, RtmpEvent> handler)
         {
             var memoryStream = new MemoryStream(packet.Buffer, false);
-            var packetReader = new AmfReader(memoryStream, reader.SerializationContext, reader.DeserializeToObjects, reader.DeserializeToDynamicWhenTypeNotFound);
+            var packetReader = new AmfReader(memoryStream, reader.SerializationContext);
 
             var header = packet.Header;
             var message = handler(packetReader);

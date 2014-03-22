@@ -14,11 +14,6 @@ namespace RtmpSharp.IO
     public class AmfReader : IDisposable
     {
         public SerializationContext SerializationContext { get; private set; }
-        
-        // Whether to deserialize to the typed object (if it exists) or a dynamic object
-        public bool DeserializeToObjects { get; set; }
-        // Whether to deserialize to a dynamic object when instructed to deserialize to a typed object and the type cannot found
-        public bool DeserializeToDynamicWhenTypeNotFound { get; set; }
 
         readonly BinaryReader underlying;
         readonly List<object> amf0ObjectReferences;
@@ -82,15 +77,10 @@ namespace RtmpSharp.IO
         };
 
 
-        public AmfReader(Stream stream, SerializationContext serializationContext) : this(stream, serializationContext, true, false)
-        {
-        }
 
-        public AmfReader(Stream stream, SerializationContext serializationContext, bool deserializeToObjects, bool deserializeToDynamicWhenTypeNotFound)
+        public AmfReader(Stream stream, SerializationContext serializationContext)
         {
             underlying = new BinaryReader(stream);
-            DeserializeToObjects = deserializeToObjects;
-            DeserializeToDynamicWhenTypeNotFound = deserializeToDynamicWhenTypeNotFound;
             SerializationContext = serializationContext;
 
             amf0ObjectReferences = new List<object>();
@@ -263,7 +253,7 @@ namespace RtmpSharp.IO
                 yield return new KeyValuePair<string, object>(key, obj);
             }
         }
-
+        
         void AddAmf0ObjectReference(object instance)
         {
             amf0ObjectReferences.Add(instance);
@@ -276,24 +266,31 @@ namespace RtmpSharp.IO
                 throw new NullReferenceException("Cannot deserialize objects because no SerializationContext was provided.");
 
             var typeName = ReadUtf();
-            if (DeserializeToObjects && SerializationContext.SerializerObjectFactory.CanCreate(typeName))
+            var strategy = SerializationContext.GetDeserializationStrategy(typeName);
+            switch (strategy)
             {
-                var instance = SerializationContext.SerializerObjectFactory.Create(typeName);
-                var classDescription = SerializationContext.ObjectWrapperFactory.GetClassDescription(instance);
-                var pairs = ReadAmf0Pairs();
-                foreach (var pair in pairs)
-                {
-                    IMemberWrapper wrapper;
-                    if (classDescription.TryGetMember(pair.Key, out wrapper))
-                        wrapper.SetValue(instance, pair.Value);
-                }
-                return instance;
-            }
+                case DeserializationStrategy.TypedObject:
+                    var instance = SerializationContext.Create(typeName);
+                    var classDescription = SerializationContext.GetClassDescription(instance);
+                    var pairs = ReadAmf0Pairs();
+                    foreach (var pair in pairs)
+                    {
+                        IMemberWrapper wrapper;
+                        if (classDescription.TryGetMember(pair.Key, out wrapper))
+                            wrapper.SetValue(instance, pair.Value);
+                    }
+                    return instance;
 
-            // Object reference added in this.ReadAmf0AsObject()
-            var aso = ReadAmf0AsObject();
-            aso.TypeName = typeName;
-            return aso;
+                case DeserializationStrategy.DynamicObject:
+                    // Object reference added in this.ReadAmf0AsObject()
+                    var aso = ReadAmf0AsObject();
+                    aso.TypeName = typeName;
+                    return aso;
+
+                default:
+                case DeserializationStrategy.Exception:
+                    throw new SerializationException(string.Format("Can't deserialize the type {0}.", typeName));
+            }
         }
 
         internal AsObject ReadAmf0AsObject()
@@ -619,19 +616,13 @@ namespace RtmpSharp.IO
 
 
 
-            var useTypedObject = DeserializeToObjects;
 
-            // deserialize as dynamic when type name does not exist
-            if (useTypedObject && DeserializeToDynamicWhenTypeNotFound)
-                useTypedObject = SerializationContext.SerializerObjectFactory.CanCreate(objectDescription.TypeName);
+            var strategy = SerializationContext.GetDeserializationStrategy(objectDescription.TypeName);
+            if (strategy == DeserializationStrategy.Exception)
+                throw new SerializationException(string.Format("Can't deserialize the type {0}.", objectDescription.TypeName));
 
-            // if the type is externalizable, we must always deserialize as a typed object
-            useTypedObject = useTypedObject || objectDescription.IsExternalizable;
-
-
-
-            var instance = useTypedObject && objectDescription.IsTyped
-                ? SerializationContext.SerializerObjectFactory.Create(objectDescription.TypeName)
+            var instance = objectDescription.IsTyped && strategy == DeserializationStrategy.TypedObject
+                ? SerializationContext.Create(objectDescription.TypeName)
                 : new AsObject(objectDescription.TypeName);
             amf3ObjectReferences.Add(instance);
 
@@ -645,7 +636,7 @@ namespace RtmpSharp.IO
             }
             else
             {
-                var classDescription = SerializationContext.ObjectWrapperFactory.GetClassDescription(instance);
+                var classDescription = SerializationContext.GetClassDescription(instance);
                 foreach (var memberName in objectDescription.MemberNames)
                 {
                     IMemberWrapper member;

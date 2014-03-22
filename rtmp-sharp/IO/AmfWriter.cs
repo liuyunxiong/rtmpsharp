@@ -531,7 +531,7 @@ namespace RtmpSharp.IO
             var type = obj.GetType();
             var typeName = type.FullName;
 
-            var classDescription = SerializationContext.ObjectWrapperFactory.GetClassDescription(type, obj);
+            var classDescription = SerializationContext.GetClassDescription(type, obj);
             if (classDescription == null)
                 throw new SerializationException(string.Format("Couldn't get class description for {0}.", typeName));
 
@@ -927,7 +927,7 @@ namespace RtmpSharp.IO
                 return;
             AddAmf3Reference(obj);
 
-            var classDescription = SerializationContext.ObjectWrapperFactory.GetClassDescription(obj);
+            var classDescription = SerializationContext.GetClassDescription(obj);
             int existingDefinitionIndex;
             if (amf3ClassDefinitionReferences.TryGetValue(classDescription, out existingDefinitionIndex))
             {

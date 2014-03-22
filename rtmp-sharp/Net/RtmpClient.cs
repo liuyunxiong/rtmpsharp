@@ -157,9 +157,9 @@ namespace RtmpSharp.Net
             // handshake check
             if (!c01.Random.SequenceEqual(s2.Random) || c01.Time != s2.Time)
                 throw new ProtocolViolationException();
-
+            
             writer = new RtmpPacketWriter(new AmfWriter(stream, serializationContext), ObjectEncoding.Amf3);
-            reader = new RtmpPacketReader(new AmfReader(stream, serializationContext, true, true));
+            reader = new RtmpPacketReader(new AmfReader(stream, serializationContext));
             reader.EventReceived += EventReceivedCallback;
             reader.Disconnected += OnPacketProcessorDisconnected;
             writer.Disconnected += OnPacketProcessorDisconnected;

@@ -29,7 +29,7 @@ namespace RtmpSharp.IO.ObjectWrappers
             if (aso.IsTyped)
             {
                 var members = aso.Select(x => (IMemberWrapper)new AsObjectMemberWrapper(x.Key)).ToArray();
-                var typeName = serializationContext.SerializerObjectFactory.GetAlias(aso.TypeName);
+                var typeName = serializationContext.GetAlias(aso.TypeName);
                 return new AsObjectClassDescription(typeName, members, false, false);
             }
             return EmptyClassDescription;
@@ -40,7 +40,7 @@ namespace RtmpSharp.IO.ObjectWrappers
             internal AsObjectClassDescription(string name, IMemberWrapper[] members, bool externalizable, bool dynamic) : base(name, members, externalizable, dynamic)
             {
             }
-
+            
             public override bool TryGetMember(string name, out IMemberWrapper memberWrapper)
             {
                 memberWrapper = new AsObjectMemberWrapper(name);

@@ -15,7 +15,7 @@ namespace RtmpSharp.IO.ObjectWrappers
         {
             return false;
         }
-
+        
         public bool GetIsExternalizable(object instance)
         {
             return false;
@@ -23,7 +23,8 @@ namespace RtmpSharp.IO.ObjectWrappers
 
         public ClassDescription GetClassDescription(object obj)
         {
-            var typeName = serializationContext.SerializerObjectFactory.GetAlias(obj.GetType().FullName);
+            var type = obj.GetType();
+            var typeName = serializationContext.GetAlias(type.FullName);
             return new ExternalizableClassDescription(typeName, new IMemberWrapper[] { }, true, false);
         }
 

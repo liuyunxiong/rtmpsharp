@@ -43,11 +43,9 @@ namespace RtmpSharp.IO.ObjectWrappers
             var classMembers = new List<BasicMemberWrapper>();
 
             // add fields and properties
-            classMembers.AddRange(serializable.Fields.Select(fieldInfo => new BasicMemberWrapper(fieldInfo.Name, fieldInfo)));
+            classMembers.AddRange(serializable.Fields.Select(fieldInfo => new BasicMemberWrapper(fieldInfo)));
             foreach (var propertyInfo in serializable.Properties)
             {
-                var name = propertyInfo.Name;
-
                 // There is no reflection API that allows us to check whether a variable hides
                 // another variable (for example, with the `new` keyword). We need to access the
                 // property by name and catch an ambiguous match.
@@ -65,7 +63,7 @@ namespace RtmpSharp.IO.ObjectWrappers
                 // some people if I ever open source this
                 try
                 {
-                    type.GetProperty(name);
+                    type.GetProperty(propertyInfo.Name);
                 }
                 catch (AmbiguousMatchException)
                 {
@@ -73,7 +71,7 @@ namespace RtmpSharp.IO.ObjectWrappers
                         continue;
                 }
 
-                var classMember = new BasicMemberWrapper(name, propertyInfo);
+                var classMember = new BasicMemberWrapper(propertyInfo);
                 classMembers.Add(classMember);
             }
 
@@ -119,17 +117,17 @@ namespace RtmpSharp.IO.ObjectWrappers
                 get { return serializedName; }
             }
 
-            public BasicMemberWrapper(string name, PropertyInfo propertyInfo)
+            public BasicMemberWrapper(PropertyInfo propertyInfo)
             {
-                this.name = name;
+                this.name = propertyInfo.Name;
                 this.propertyInfo = propertyInfo;
                 this.isField = false;
                 LoadSerializedName(propertyInfo);
             }
 
-            public BasicMemberWrapper(string name, FieldInfo fieldInfo)
+            public BasicMemberWrapper(FieldInfo fieldInfo)
             {
-                this.name = name;
+                this.name = fieldInfo.Name;
                 this.fieldInfo = fieldInfo;
                 this.isField = true;
                 LoadSerializedName(fieldInfo);
@@ -138,8 +136,7 @@ namespace RtmpSharp.IO.ObjectWrappers
             void LoadSerializedName(MemberInfo memberInfo)
             {
                 var attribute = memberInfo.GetCustomAttribute<SerializedNameAttribute>(true);
-                if (attribute != null)
-                    serializedName = attribute.SerializedName;
+                serializedName = attribute != null ? attribute.SerializedName : name;
             }
 
             public object GetValue(object instance)

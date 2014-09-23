@@ -958,8 +958,6 @@ namespace RtmpSharp.IO
                 // last shift done in this method
                 WriteAmf3InlineHeader(header);
                 WriteAmf3Utf(classDescription.Name);
-                foreach (var member in classDescription.Members)
-                    WriteAmf3Utf(member.SerializedName);
 
                 // write object
                 if (classDescription.IsExternalizable)
@@ -972,6 +970,9 @@ namespace RtmpSharp.IO
                 }
                 else
                 {
+                    foreach (var member in classDescription.Members)
+                        WriteAmf3Utf(member.SerializedName);
+
                     foreach (var member in classDescription.Members)
                         WriteAmf3Item(member.GetValue(obj));
 

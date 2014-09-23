@@ -959,7 +959,7 @@ namespace RtmpSharp.IO
                 WriteAmf3InlineHeader(header);
                 WriteAmf3Utf(classDescription.Name);
                 foreach (var member in classDescription.Members)
-                    WriteAmf3Utf(member.SerializedName);
+                    WriteAmf3Utf(member.SerializedName ?? member.Name);
 
                 // write object
                 if (classDescription.IsExternalizable)

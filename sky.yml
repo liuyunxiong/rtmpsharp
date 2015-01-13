@@ -1,11 +1,11 @@
-# sky 1.00
+# sky 1.04
 
 include:
-    rtmp-sharp/complete:
-        - csharp/complete
-            - exceptionaleventargs
-            - io
-                - streamhelper
-                - zlib
-            - methodfactory
-            - taskcallbackmanager
+  rtmp-sharp/complete:
+      csharp/complete:
+          exceptionaleventargs:
+          io:
+              streamhelper:
+              zlib:
+          methodfactory:
+          taskcallbackmanager:

@@ -90,7 +90,7 @@ namespace Complete.IO.Zlib
             if (firstReadWrite)
             {
                 firstReadWrite = false;
-                await stream.WriteAsync(ZlibHeader, 0, ZlibHeader.Length);
+                await stream.WriteAsync(ZlibHeader, 0, ZlibHeader.Length, cancellationToken);
             }
 
             await base.WriteAsync(buffer, offset, count, cancellationToken);

@@ -649,7 +649,7 @@ namespace RtmpSharp.IO
                 {
                     while (true)
                     {
-                        var key = ReadUtf();
+                        var key = ReadAmf3String();
                         if (string.IsNullOrEmpty(key))
                             break;
                         var obj = ReadAmf3Item();

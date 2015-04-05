@@ -468,7 +468,7 @@ namespace RtmpSharp.Net
             }
             catch (Exception unhandled)
             {
-#if DEBUG && BREAK_ON_UNHANDLED_CALLBACK
+#if DEBUG && BREAK_ON_EXCEPTED_CALLBACK
                 System.Diagnostics.Debug.Print("UNHANDLED EXCEPTION IN CALLBACK: {0}: {1} @ {2}", unhandled.GetType(), unhandled.Message, unhandled.StackTrace);
                 System.Diagnostics.Debugger.Break();
 #endif

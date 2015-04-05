@@ -232,7 +232,7 @@ namespace RtmpSharp.Net
                 case MessageType.SetPeerBandwith:
                     return GetMessageBytes(message, (w, o) =>
                     {
-                        var m = (PeerBandwith)o;
+                        var m = (PeerBandwidth)o;
                         w.WriteInt32(m.AcknowledgementWindowSize);
                         w.WriteByte((byte)m.LimitType);
                     });

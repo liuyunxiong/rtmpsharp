@@ -16,7 +16,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\gac\</OutputPath>
+    <OutputPath>bin/debug</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\gac\</OutputPath>
+    <OutputPath>bin/release</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -34,7 +34,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\..\..\keys\wintermint\strong-name-keys\rtmp-sharp.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>rtmp-sharp.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -116,7 +116,7 @@
     <Compile Include="Messaging\Events\AudioVideoData.cs" />
     <Compile Include="Messaging\Events\ChunkSize.cs" />
     <Compile Include="Messaging\Events\Command.cs" />
-    <Compile Include="Messaging\Events\PeerBandwith.cs" />
+    <Compile Include="Messaging\Events\PeerBandwidth.cs" />
     <Compile Include="Messaging\Events\UserControlMessage.cs" />
     <Compile Include="Messaging\Events\WindowAcknowledgementSize.cs" />
     <Compile Include="Messaging\InvocationException.cs" />
@@ -142,7 +142,7 @@
     <Compile Include="RtmpSharp.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\keys\wintermint\strong-name-keys\rtmp-sharp.snk">
+    <None Include="rtmp-sharp.snk">
       <Link>rtmp-sharp.snk</Link>
     </None>
   </ItemGroup>

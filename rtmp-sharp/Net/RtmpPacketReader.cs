@@ -215,7 +215,7 @@ namespace RtmpSharp.Net
                 case MessageType.WindowAcknowledgementSize:
                     return ParsePacket(packet, r => new WindowAcknowledgementSize(r.ReadInt32()));
                 case MessageType.SetPeerBandwith:
-                    return ParsePacket(packet, r => new PeerBandwith(r.ReadInt32(), r.ReadByte()));
+                    return ParsePacket(packet, r => new PeerBandwidth(r.ReadInt32(), r.ReadByte()));
                 case MessageType.Audio:
                     return ParsePacket(packet, r => new AudioData(packet.Buffer));
                 case MessageType.Video:

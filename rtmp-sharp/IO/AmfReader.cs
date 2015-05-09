@@ -389,7 +389,6 @@ namespace RtmpSharp.IO
             };
         }
 
-        // TODO: Should refactor and reduce nesting.
         // Variable-length integer which uses the highest bit or each byte as a continuation flag.
         internal int ReadAmf3Int()
         {

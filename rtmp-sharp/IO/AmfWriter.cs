@@ -343,9 +343,9 @@ namespace RtmpSharp.IO
             if (buffer == null)
                 throw new ArgumentNullException("buffer");
 
-            // TODO: More specific exception type
             if (buffer.Length > ushort.MaxValue)
-                throw new SerializationException("String is larger than maximum encodable value.");
+                throw new SerializationException("string is larger than maximum encodable value.");
+
             WriteUInt16((ushort)buffer.Length);
             Write(buffer);
         }

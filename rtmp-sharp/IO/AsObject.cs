@@ -16,7 +16,7 @@ namespace RtmpSharp.IO
         readonly Dictionary<string, object> underlying;
 
         public string TypeName { get; set; }
-        public bool IsTyped { get { return !string.IsNullOrEmpty(TypeName); } }
+        public bool IsTyped => !string.IsNullOrEmpty(TypeName);
 
         public AsObject()
         {
@@ -33,33 +33,17 @@ namespace RtmpSharp.IO
             underlying = new Dictionary<string, object>(dictionary);
         }
 
-        public override IEnumerable<string> GetDynamicMemberNames()
-        {
-            return underlying.Keys;
-        }
-
-        public override bool TryGetMember(GetMemberBinder binder, out object result)
-        {
-            return underlying.TryGetValue(binder.Name, out result);
-        }
-
-        public override bool TryDeleteMember(DeleteMemberBinder binder)
-        {
-            return underlying.Remove(binder.Name);
-        }
-
-        public override bool TrySetMember(SetMemberBinder binder, object value)
-        {
-            underlying[binder.Name] = value;
-            return true;
-        }
+        public override IEnumerable<string> GetDynamicMemberNames() => underlying.Keys;
+        public override bool TryGetMember(GetMemberBinder binder, out object result) => underlying.TryGetValue(binder.Name, out result);
+        public override bool TryDeleteMember(DeleteMemberBinder binder) => underlying.Remove(binder.Name);
+        public override bool TrySetMember(SetMemberBinder binder, object value) { underlying[binder.Name] = value; return true; }
 
         #region IDictionary<> members
 
-        public int Count { get { return underlying.Count; } }
-        public bool IsReadOnly { get { return ((IDictionary<string, object>)underlying).IsReadOnly; } }
-        public ICollection<string> Keys { get { return underlying.Keys; } }
-        public ICollection<object> Values { get { return underlying.Values; } }
+        public int Count => underlying.Count;
+        public bool IsReadOnly => ((IDictionary<string, object>)underlying).IsReadOnly;
+        public ICollection<string> Keys => underlying.Keys;
+        public ICollection<object> Values => underlying.Values;
 
         public void Add(KeyValuePair<string, object> item)
         {

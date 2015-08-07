@@ -6,11 +6,11 @@ namespace RtmpSharp.IO.ObjectWrappers
     {
         static readonly ClassDescription EmptyClassDescription = new AsObjectClassDescription(string.Empty, new IMemberWrapper[] { }, false, true);
 
-        readonly SerializationContext serializationContext;
+        readonly SerializationContext context;
 
         public AsObjectWrapper(SerializationContext serializationContext)
         {
-            this.serializationContext = serializationContext;
+            this.context = serializationContext;
         }
 
         public bool GetIsDynamic(object instance)
@@ -26,13 +26,12 @@ namespace RtmpSharp.IO.ObjectWrappers
         public ClassDescription GetClassDescription(object obj)
         {
             var aso = (AsObject)obj;
-            if (aso.IsTyped)
-            {
-                var members = aso.Select(x => (IMemberWrapper)new AsObjectMemberWrapper(x.Key)).ToArray();
-                var typeName = serializationContext.GetAlias(aso.TypeName);
-                return new AsObjectClassDescription(typeName, members, false, false);
-            }
-            return EmptyClassDescription;
+            if (!aso.IsTyped)
+                return EmptyClassDescription;
+
+            var members = aso.Select(x => new AsObjectMemberWrapper(x.Key)).Cast<IMemberWrapper>().ToArray();
+            var typeName = context.GetAlias(aso.TypeName);
+            return new AsObjectClassDescription(typeName, members, false, false);
         }
 
         class AsObjectClassDescription : ClassDescription
@@ -41,17 +40,17 @@ namespace RtmpSharp.IO.ObjectWrappers
             {
             }
             
-            public override bool TryGetMember(string name, out IMemberWrapper memberWrapper)
+            public override bool TryGetMember(string name, out IMemberWrapper member)
             {
-                memberWrapper = new AsObjectMemberWrapper(name);
+                member = new AsObjectMemberWrapper(name);
                 return true;
             }
         }
 
         class AsObjectMemberWrapper : IMemberWrapper
         {
-            public string Name { get; private set; }
-            public string SerializedName { get { return Name; }}
+            public string Name { get; }
+            public string SerializedName => Name;
 
             public AsObjectMemberWrapper(string name)
             {

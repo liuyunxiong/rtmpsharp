@@ -12,13 +12,11 @@ namespace RtmpSharp.IO
 {
     static class MiniTypeConverter
     {
-        static Func<object, object> Passthrough = x => x;
-
-        static MethodInfo EnumerableToArrayMethod = typeof(MiniTypeConverter).GetMethod("EnumerableToArray", BindingFlags.Static | BindingFlags.NonPublic);
+        static readonly MethodInfo EnumerableToArrayMethod = typeof(MiniTypeConverter).GetMethod("EnumerableToArray", BindingFlags.Static | BindingFlags.NonPublic);
         static T[] EnumerableToArray<T>(IEnumerable enumerable) { return enumerable.Cast<T>().ToArray(); }
 
-        static ConcurrentDictionary<Type, MethodInfo> EnumerableToArrayCache = new ConcurrentDictionary<Type, MethodInfo>();
-        static ConcurrentDictionary<Type, AdderMethodInfo> AdderMethodCache = new ConcurrentDictionary<Type, AdderMethodInfo>();
+        static readonly ConcurrentDictionary<Type, MethodInfo> EnumerableToArrayCache = new ConcurrentDictionary<Type, MethodInfo>();
+        static readonly ConcurrentDictionary<Type, AdderMethodInfo> AdderMethodCache = new ConcurrentDictionary<Type, AdderMethodInfo>();
 
         static MiniTypeConverter()
         {
@@ -34,15 +32,14 @@ namespace RtmpSharp.IO
                 return value;
 
             // IConvertible
-            if (Reflection.IsConvertible(sourceType) && Reflection.IsConvertible(targetType))
+            if (sourceType.IsConvertible() && targetType.IsConvertible())
             {
                 if (targetType.IsEnum)
                 {
                     var stringValue = value as string;
-                    if (stringValue != null)
-                        return Enum.Parse(targetType, stringValue, true);
-                    
-                    return Enum.ToObject(targetType, value);
+                    return stringValue != null
+                        ? Enum.Parse(targetType, stringValue, true)
+                        : Enum.ToObject(targetType, value);
                 }
 
                 return ConvertObject(sourceType, targetType, value);
@@ -50,7 +47,7 @@ namespace RtmpSharp.IO
 
             var ienumerable = value as IEnumerable;
 
-            // Array
+            // array
             if (targetType.IsArray && ienumerable != null)
             {
                 var sourceElementType = sourceType.GetElementType();
@@ -61,12 +58,12 @@ namespace RtmpSharp.IO
                 if (!destinationElementType.IsAssignableFrom(sourceElementType))
                     enumerable = enumerable.Select(x => ConvertTo(x, destinationElementType));
 
-                var method = EnumerableToArrayCache.GetOrAdd(destinationElementType, type => EnumerableToArrayMethod.MakeGenericMethod(new[] { type }));
+                var method = EnumerableToArrayCache.GetOrAdd(destinationElementType, type => EnumerableToArrayMethod.MakeGenericMethod(type));
                 return method.Invoke(null, new object[] { enumerable });
             }
 
             // IDictionary<K, V>
-            //     - We always deserialize AMF dictionaries as Dictionary<string, object> (or an object that inherits from it)
+            //     - we always deserialize AMF dictionaries as Dictionary<string, object> (or an object that inherits from it)
             var sourceGenericDictionary = value as IDictionary<string, object>;
             var genericDictionaryType = TryGetInterfaceType(targetType, typeof(IDictionary<,>));
             if (sourceGenericDictionary != null && genericDictionaryType != null)
@@ -151,9 +148,9 @@ namespace RtmpSharp.IO
 
         static object CreateDefaultValue(Type type)
         {
-            if (type.IsValueType)
-                return Activator.CreateInstance(type);
-            return null;
+            return type.IsValueType
+                ? Activator.CreateInstance(type)
+                : null;
         }
 
         static Type TryGetInterfaceType(Type targetType, Type type)
@@ -165,8 +162,8 @@ namespace RtmpSharp.IO
 
         struct AdderMethodInfo
         {
-            public MethodInfo Method;
-            public Type[] TypeGenericParameters;
+            public readonly MethodInfo Method;
+            public readonly Type[] TypeGenericParameters;
 
             public AdderMethodInfo(Type genericType)
             {
@@ -179,14 +176,7 @@ namespace RtmpSharp.IO
 
     static class Reflection
     {
-        public static bool IsNullable(this Type type)
-        {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
-        }
-
-        public static bool IsConvertible(this Type type)
-        {
-            return typeof(IConvertible).IsAssignableFrom(type);
-        }
+        public static bool IsConvertible(this Type type) => typeof(IConvertible).IsAssignableFrom(type);
+        public static bool IsNullable(this Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
     }
 }

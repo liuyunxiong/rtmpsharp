@@ -10,7 +10,7 @@ namespace Complete.IO
         public static byte[] ReadBytes(this Stream stream, int count)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
 
             var result = new byte[count];
             var bytesRead = 0;
@@ -32,7 +32,7 @@ namespace Complete.IO
         public static async Task<byte[]> ReadBytesAsync(this Stream stream, int count)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
 
             var result = new byte[count];
             var bytesRead = 0;

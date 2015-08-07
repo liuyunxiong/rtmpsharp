@@ -29,7 +29,7 @@ namespace RtmpSharp.IO
             public string[] MemberNames;
             public bool IsExternalizable;
             public bool IsDynamic;
-            public bool IsTyped { get { return !string.IsNullOrEmpty(TypeName); } }
+            public bool IsTyped => !string.IsNullOrEmpty(TypeName);
         }
 
         static readonly List<Func<AmfReader, object>> Amf0TypeReaders = new List<Func<AmfReader, object>>
@@ -91,23 +91,14 @@ namespace RtmpSharp.IO
 
         public void Dispose()
         {
-            if (underlying != null)
-                underlying.Dispose();
+            underlying?.Dispose();
         }
 
+        # region helpers
 
-
-
-
-
-
-
-
-
-        # region Helper methods
-        public long Length { get { return underlying.BaseStream.Length; } }
-        public long Position { get { return underlying.BaseStream.Position; } }
-        public bool DataAvailable { get { return Position < Length; } }
+        public long Length => underlying.BaseStream.Length;
+        public long Position => underlying.BaseStream.Position;
+        public bool DataAvailable => Position < Length;
 
         public void Reset()
         {
@@ -206,6 +197,7 @@ namespace RtmpSharp.IO
             var bytes = ReadBytes(length);
             return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
         }
+
         #endregion
 
 
@@ -217,7 +209,8 @@ namespace RtmpSharp.IO
 
 
 
-        # region Amf0
+        #region amf0
+
         public object ReadAmf0Item()
         {
             var type = ReadByte();
@@ -240,7 +233,7 @@ namespace RtmpSharp.IO
             return EnumerableReadAmf0Pairs().ToDictionary(x => x.Key, x => x.Value);
         }
 
-        // This iterator block lazily reads from the stream. Keep this in mind when trying to iterate over it. Instead, use the this.ReadAmf0Pairs() method.
+        // this method blocks when enumerating through the stream. consider using ReadAmf0Pairs() instead.
         IEnumerable<KeyValuePair<string, object>> EnumerableReadAmf0Pairs()
         {
             while (true)
@@ -249,6 +242,7 @@ namespace RtmpSharp.IO
                 var typeMarker = ReadByte();
                 if (typeMarker == (byte)Amf0TypeMarkers.ObjectEnd)
                     yield break;
+
                 var obj = ReadAmf0Item(typeMarker);
                 yield return new KeyValuePair<string, object>(key, obj);
             }
@@ -282,14 +276,14 @@ namespace RtmpSharp.IO
                     return instance;
 
                 case DeserializationStrategy.DynamicObject:
-                    // Object reference added in this.ReadAmf0AsObject()
+                    // object reference added in this.ReadAmf0AsObject()
                     var aso = ReadAmf0AsObject();
                     aso.TypeName = typeName;
                     return aso;
 
                 default:
                 case DeserializationStrategy.Exception:
-                    throw new SerializationException(string.Format("Can't deserialize the type {0}.", typeName));
+                    throw new SerializationException($"can't deserialize a `{typeName}`");
             }
         }
 
@@ -344,6 +338,7 @@ namespace RtmpSharp.IO
             var str = ReadAmf0LongString();
             return string.IsNullOrEmpty(str) ? new XDocument() : XDocument.Parse(str);
         }
+
         #endregion
 
 
@@ -355,7 +350,8 @@ namespace RtmpSharp.IO
 
 
 
-        #region Amf3
+        #region amf3
+
         struct Amf3Field
         {
             public bool IsReference;
@@ -389,7 +385,7 @@ namespace RtmpSharp.IO
             };
         }
 
-        // Variable-length integer which uses the highest bit or each byte as a continuation flag.
+        // variable-length integer which uses the highest bit or each byte as a continuation flag.
         internal int ReadAmf3Int()
         {
             // http://download.macromedia.com/pub/labs/amf/Amf3_spec_121207.pdf
@@ -434,8 +430,8 @@ namespace RtmpSharp.IO
                 }
             }
 
-            // To sign extend a value from some number of bits to a greater number of bits just copy the sign bit into all the additional bits in the new format.
-            // Convert/sign extend the 29bit two's complement number to 32 bit
+            // to sign extend a value from some number of bits to a greater number of bits just copy the sign bit into all the additional bits in the new format.
+            // convert / sign extend the 29-bit two's complement number to 32 bit
             const int mask = 1 << 28;
             return -(total & mask) | total;
         }
@@ -522,14 +518,14 @@ namespace RtmpSharp.IO
             var array = new object[length];
             if (!hasAssociative)
                 amf3ObjectReferences.Add(array);
-            foreach (var i in Enumerable.Range(0, length))
+            for (var i = 0; i < length; i++)
                 array[i] = ReadAmf3Item();
 
             // merge associative and strict elements, if there's an associative
             // otherwise return strict array
             if (hasAssociative)
             {
-                for (int i = 0; i < array.Length; i++)
+                for (var i = 0; i < array.Length; i++)
                     associative.Add(i.ToString(CultureInfo.InvariantCulture), array[i]);
                 return associative;
             }
@@ -549,7 +545,7 @@ namespace RtmpSharp.IO
             amf3ObjectReferences.Add(list);
 
             var typeName = hasTypeName ? ReadAmf3String() : null;
-            for (int i = 0; i < itemCount; i++)
+            for (var i = 0; i < itemCount; i++)
                 list.Add(readElement(this));
 
             if (fixedSize)
@@ -584,7 +580,6 @@ namespace RtmpSharp.IO
             if (isReference)
                 return amf3ClassDefinitions[flags >> 1];
 
-            // name of class
             var typeName = ReadAmf3String();
             var externalizable = ((flags >> 1) & 1) != 0;
             var dynamic = ((flags >> 2) & 1) != 0;
@@ -605,38 +600,38 @@ namespace RtmpSharp.IO
         internal object ReadAmf3Object()
         {
             if (SerializationContext == null)
-                throw new NullReferenceException("Cannot deserialize objects because no SerializationContext was provided.");
+                throw new NullReferenceException("no serialization context was provided");
 
             var header = ReadAmf3Field();
             if (header.IsReference)
                 return GetAmf3ObjectReference(header.Value);
 
-            var objectDescription = ReadClassDefinition(header.Value);
+            var klass = ReadClassDefinition(header.Value);
 
 
 
 
-            var strategy = SerializationContext.GetDeserializationStrategy(objectDescription.TypeName);
+            var strategy = SerializationContext.GetDeserializationStrategy(klass.TypeName);
             if (strategy == DeserializationStrategy.Exception)
-                throw new SerializationException(string.Format("Can't deserialize the type {0}.", objectDescription.TypeName));
+                throw new SerializationException($"can't deserialize a `{klass.TypeName}`");
 
-            var instance = objectDescription.IsTyped && strategy == DeserializationStrategy.TypedObject
-                ? SerializationContext.Create(objectDescription.TypeName)
-                : new AsObject(objectDescription.TypeName);
+            var instance = klass.IsTyped && strategy == DeserializationStrategy.TypedObject
+                ? SerializationContext.Create(klass.TypeName)
+                : new AsObject(klass.TypeName);
             amf3ObjectReferences.Add(instance);
 
-            if (objectDescription.IsExternalizable)
+            if (klass.IsExternalizable)
             {
                 var externalizable = instance as IExternalizable;
                 if (externalizable == null)
-                    throw new SerializationException(string.Format("Externalizable class <{0}> does not implement IExternalizable", objectDescription.TypeName));
+                    throw new SerializationException($"{klass.TypeName} does not implement IExternalizable");
 
                 externalizable.ReadExternal(new DataInput(this));
             }
             else
             {
                 var classDescription = SerializationContext.GetClassDescription(instance);
-                foreach (var memberName in objectDescription.MemberNames)
+                foreach (var memberName in klass.MemberNames)
                 {
                     IMemberWrapper member;
                     var value = ReadAmf3Item();
@@ -644,7 +639,7 @@ namespace RtmpSharp.IO
                         member.SetValue(instance, value);
                 }
 
-                if (objectDescription.IsDynamic)
+                if (klass.IsDynamic)
                 {
                     while (true)
                     {
@@ -662,6 +657,6 @@ namespace RtmpSharp.IO
             return instance;
         }
 
-        #endregion Amf3
+        #endregion
     }
 }

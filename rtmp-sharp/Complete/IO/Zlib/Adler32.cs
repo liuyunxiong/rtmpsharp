@@ -17,7 +17,7 @@ namespace Complete.IO.Zlib
         public void Update(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
 
             var s1 = checksum & 0xFFFF;
             var s2 = (checksum >> 16) & 0xFFFF;
@@ -44,7 +44,7 @@ namespace Complete.IO.Zlib
         public void Update(byte[] buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
             
             Update(buffer, 0, buffer.Length);
         }

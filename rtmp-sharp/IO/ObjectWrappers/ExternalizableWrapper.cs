@@ -4,28 +4,25 @@ namespace RtmpSharp.IO.ObjectWrappers
 {
     class ExternalizableWrapper : IObjectWrapper
     {
-        readonly SerializationContext serializationContext;
+        readonly SerializationContext context;
 
-        public ExternalizableWrapper(SerializationContext serializationContext)
-        {
-            this.serializationContext = serializationContext;
-        }
+        public bool GetIsDynamic(object instance) => false;
+        public bool GetIsExternalizable(object instance) => false;
 
-        public bool GetIsDynamic(object instance)
+        public ExternalizableWrapper(SerializationContext context)
         {
-            return false;
-        }
-        
-        public bool GetIsExternalizable(object instance)
-        {
-            return false;
+            this.context = context;
         }
 
         public ClassDescription GetClassDescription(object obj)
         {
             var type = obj.GetType();
-            var typeName = serializationContext.GetAlias(type.FullName);
-            return new ExternalizableClassDescription(typeName, new IMemberWrapper[] { }, true, false);
+            
+            return new ExternalizableClassDescription(
+                context.GetAlias(type.FullName),
+                new IMemberWrapper[] { },
+                externalizable: true,
+                dynamic: false);
         }
 
         class ExternalizableClassDescription : ClassDescription
@@ -35,7 +32,7 @@ namespace RtmpSharp.IO.ObjectWrappers
             {
             }
 
-            public override bool TryGetMember(string name, out IMemberWrapper memberWrapper)
+            public override bool TryGetMember(string name, out IMemberWrapper member)
             {
                 throw new NotSupportedException();
             }

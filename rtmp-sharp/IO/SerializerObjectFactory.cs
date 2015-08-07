@@ -28,16 +28,8 @@ namespace RtmpSharp.IO
 
 
 
-        public object Create(Type type)
-        {
-            return constructors[type](new object[0]);
-        }
-
-        public object Create(string typeName)
-        {
-            return Create(remoteToLocalNames[typeName]);
-        }
-
+        public object Create(Type type) => constructors[type](new object[0]);
+        public object Create(string typeName) => Create(remoteToLocalNames[typeName]);
 
 
         // Add the type to the list of creatable types
@@ -48,7 +40,7 @@ namespace RtmpSharp.IO
 
             var constructor = type.GetConstructors().FirstOrDefault(x => x.GetParameters().Length == 0);
             if (constructor == null)
-                throw new ArgumentException(string.Format("<{0}> does not have any accessible parameterless constructors.", type.FullName), "type");
+                throw new ArgumentException($"{type.FullName} does not have any accessible parameterless constructors.", nameof(type));
 
             constructors[type] = MethodFactory.CompileObjectConstructor(constructor);
 
@@ -60,15 +52,13 @@ namespace RtmpSharp.IO
             else if (attributes.Count(x => x.Canonical) == 1)
             {
                 foreach (var attribute in attributes)
-                    this.RegisterAlias(type, attribute.SerializedName, attribute.Canonical);
+                    RegisterAlias(type, attribute.SerializedName, attribute.Canonical);
             }
             else
             {
-                var message = string.Format(
-                    "<{0}> has {1} candidate names marked as canonical, but only one is allowed.",
-                    type.FullName,
-                    attributes.Count(x => x.Canonical));
-                throw new ArgumentException(message, "type");
+                throw new ArgumentException(
+                    $"{type.FullName} has {attributes.Count(x => x.Canonical)} candidate names marked as canonical. only one can be canonical.",
+                    nameof(type));
             }
         }
 

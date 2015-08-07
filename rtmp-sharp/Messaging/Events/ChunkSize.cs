@@ -4,7 +4,7 @@ namespace RtmpSharp.Messaging.Events
 {
     class ChunkSize : RtmpEvent
     {
-        public int Size { get; private set; }
+        public int Size { get; }
 
         public ChunkSize(int size) : base(MessageType.SetChunkSize)
         {

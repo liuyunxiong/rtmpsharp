@@ -4,7 +4,7 @@ namespace RtmpSharp.Messaging.Events
 {
     abstract class ByteData : RtmpEvent
     {
-        public byte[] Data { get; private set; }
+        public byte[] Data { get; }
 
         protected ByteData(byte[] data, MessageType messageType) : base(messageType)
         {

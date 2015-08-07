@@ -9,7 +9,7 @@ namespace RtmpSharp.IO
         public static byte[] ReadBytes(Stream stream, int count)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
 
             var result = new byte[count];
             var bytesRead = 0;
@@ -23,13 +23,7 @@ namespace RtmpSharp.IO
             }
 
             if (bytesRead != result.Length)
-            {
                 throw new EndOfStreamException();
-                // Trim array.  This should happen on EOF & possibly net streams. 
-                //var copy = new byte[numRead];
-                //Buffer.InternalBlockCopy(result, 0, copy, 0, numRead);
-                //result = copy;
-            }
 
             return result;
         }
@@ -37,7 +31,7 @@ namespace RtmpSharp.IO
         public static async Task<byte[]> ReadBytesAsync(Stream stream, int count)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
 
             var result = new byte[count];
             var bytesRead = 0;
@@ -51,13 +45,7 @@ namespace RtmpSharp.IO
             }
 
             if (bytesRead != result.Length)
-            {
                 throw new EndOfStreamException();
-                // Trim array.  This should happen on EOF & possibly net streams. 
-                //var copy = new byte[numRead];
-                //Buffer.InternalBlockCopy(result, 0, copy, 0, numRead);
-                //result = copy;
-            }
 
             return result;
         }

@@ -11,28 +11,22 @@ namespace RtmpSharp.IO.ObjectWrappers
         // TODO: Turn this into a real cache... which expires old items.
         readonly Dictionary<Type, ClassDescription> cache = new Dictionary<Type, ClassDescription>();
 
-        readonly SerializationContext serializationContext;
+        readonly SerializationContext context;
 
-        public BasicObjectWrapper(SerializationContext serializationContext)
-        {
-            this.serializationContext = serializationContext;
-        }
+        public bool GetIsExternalizable(object instance) => instance is IExternalizable;
+        public bool GetIsDynamic(object instance) => instance is AsObject;
 
-        public bool GetIsExternalizable(object instance)
+        public BasicObjectWrapper(SerializationContext context)
         {
-            return instance is IExternalizable;
-        }
-
-        public bool GetIsDynamic(object instance)
-        {
-            return instance is AsObject;
+            this.context = context;
         }
 
         // Gets the class definition for an object `obj`, applying transformations like type name mappings
         public virtual ClassDescription GetClassDescription(object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
+
             var type = obj.GetType();
 
             ClassDescription cachedDescription;
@@ -71,18 +65,20 @@ namespace RtmpSharp.IO.ObjectWrappers
                         continue;
                 }
 
-                var classMember = new BasicMemberWrapper(propertyInfo);
-                classMembers.Add(classMember);
+                classMembers.Add(new BasicMemberWrapper(propertyInfo));
             }
 
-            var typeName = serializationContext.GetAlias(type.FullName);
-            return new BasicObjectClassDescription(typeName, classMembers.Cast<IMemberWrapper>().ToArray(), GetIsExternalizable(obj), GetIsDynamic(obj));
+            return new BasicObjectClassDescription(
+                context.GetAlias(type.FullName),
+                classMembers.Cast<IMemberWrapper>().ToArray(),
+                GetIsExternalizable(obj),
+                GetIsDynamic(obj));
         }
 
         class BasicObjectClassDescription : ClassDescription
         {
             // Because we are cached by the `BasicObjectWrapper`, speed up lookups so that read deserialisation is (slightly) faster.
-            public Dictionary<string, IMemberWrapper> MemberLookup { get; private set; }
+            Dictionary<string, IMemberWrapper> MemberLookup { get; }
 
             internal BasicObjectClassDescription(string name, IMemberWrapper[] members, bool externalizable, bool dynamic)
                 : base(name, members, externalizable, dynamic)
@@ -93,50 +89,37 @@ namespace RtmpSharp.IO.ObjectWrappers
                     .ToDictionary(x => x.Key, x => x.First().Member);
             }
 
-            public override bool TryGetMember(string name, out IMemberWrapper memberWrapper)
+            public override bool TryGetMember(string name, out IMemberWrapper member)
             {
-                return MemberLookup.TryGetValue(name, out memberWrapper);
+                return MemberLookup.TryGetValue(name, out member);
             }
         }
 
         class BasicMemberWrapper : IMemberWrapper
         {
-            string name;
-            string serializedName;
             bool isField;
             PropertyInfo propertyInfo;
             FieldInfo fieldInfo;
 
-            public string Name
-            {
-                get { return name; }
-            }
-
-            public string SerializedName
-            {
-                get { return serializedName; }
-            }
+            public string Name { get; }
+            public string SerializedName { get; }
 
             public BasicMemberWrapper(PropertyInfo propertyInfo)
             {
-                this.name = propertyInfo.Name;
                 this.propertyInfo = propertyInfo;
                 this.isField = false;
-                LoadSerializedName(propertyInfo);
+
+                this.Name = propertyInfo.Name;
+                this.SerializedName = propertyInfo.GetCustomAttribute<SerializedNameAttribute>(true)?.SerializedName ?? Name;
             }
 
             public BasicMemberWrapper(FieldInfo fieldInfo)
             {
-                this.name = fieldInfo.Name;
                 this.fieldInfo = fieldInfo;
                 this.isField = true;
-                LoadSerializedName(fieldInfo);
-            }
 
-            void LoadSerializedName(MemberInfo memberInfo)
-            {
-                var attribute = memberInfo.GetCustomAttribute<SerializedNameAttribute>(true);
-                serializedName = attribute != null ? attribute.SerializedName : name;
+                this.Name = fieldInfo.Name;
+                this.SerializedName = fieldInfo.GetCustomAttribute<SerializedNameAttribute>(true)?.SerializedName ?? Name;
             }
 
             public object GetValue(object instance)
@@ -146,12 +129,13 @@ namespace RtmpSharp.IO.ObjectWrappers
 
             public void SetValue(object instance, object value)
             {
-                var targetType = isField ? fieldInfo.FieldType : propertyInfo.PropertyType;
-                var val = MiniTypeConverter.ConvertTo(value, targetType);
+                var target = isField ? fieldInfo.FieldType : propertyInfo.PropertyType;
+                var converted = MiniTypeConverter.ConvertTo(value, target);
+
                 if (isField)
-                    fieldInfo.SetValue(instance, val);
+                    fieldInfo.SetValue(instance, converted);
                 else
-                    propertyInfo.SetValue(instance, val);
+                    propertyInfo.SetValue(instance, converted);
             }
         }
 
@@ -167,21 +151,21 @@ namespace RtmpSharp.IO.ObjectWrappers
             {
                 return GetSerializableFields(obj.GetType());
             }
+
             public static FieldsAndProperties GetSerializableFields(Type type)
             {
-                var filteredProperties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     .Where(x => x.GetCustomAttributes(typeof(TransientAttribute), true).Length == 0)
-                    .Where(x => x.GetGetMethod() != null) // skip if access modifier makes it inaccessible (when GetGetMethod() returns null)
-                    .Where(x => x.GetGetMethod().GetParameters().Length == 0); // skip if not a "pure" get property has parameters (eg get property for `class[int index]`)
+                    .Where(x => x.GetGetMethod()?.GetParameters().Length == 0); // skip if not a "pure" get property, aka has parameters (eg `class[int index]`)
 
-                var filteredFieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
                     .Where(x => x.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
                     .Where(x => x.GetCustomAttributes(typeof(TransientAttribute), true).Length == 0);
 
                 return new FieldsAndProperties()
                 {
-                    Properties = filteredProperties.ToArray(),
-                    Fields = filteredFieldInfos.ToArray()
+                    Properties = properties.ToArray(),
+                    Fields = fields.ToArray()
                 };
             }
         }

@@ -43,10 +43,10 @@ namespace RtmpSharp.IO
     public class AmfWriter : IDisposable
     {
         // [0, 2^29-1]
-        static int[] UInt29Range = new[] { 0, 536870911 };
+        static readonly int[] UInt29Range = new[] { 0, 536870911 };
         // [-2^28, 2^28-1]
-        static int[] Int29Range = new[] { -268435456, 268435455 };
-        static DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        static readonly int[] Int29Range = new[] { -268435456, 268435455 };
+        static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc); 
 
         static readonly AmfWriterMap Amf0Writers;
         static readonly AmfWriterMap Amf3Writers;
@@ -126,8 +126,8 @@ namespace RtmpSharp.IO
                 Amf3Writers.Add(type, amf3FloatingWriter);
         }
 
-        // Add write support for the new specialized vector and dictionary types introduced into the AMF3 specification by Adobe for Flash 10
-        // Old servers do not understand this, so it is an optional call.
+        // add write support for the new specialized vector and dictionary types introduced into the AMF3 specification by Adobe for Flash 10
+        // old servers do not understand this, so it is an optional call.
         public static void EnableFlash10Writers()
         {
             var createVectorIntWriter = new Func<bool, IAmfItemWriter>(isFixed => new Amf3VectorWriter<int>(Amf3TypeMarkers.VectorInt, (writer, list) => writer.WriteAmf3Vector<int>(false, isFixed, list, writer.WriteInt32)));
@@ -145,6 +145,7 @@ namespace RtmpSharp.IO
                 { typeof(object[]),      createVectorObjectWriter(true) },
                 { typeof(List<object>),  createVectorObjectWriter(false) },
             };
+
             foreach (var pair in amf3Flash10Writers)
                 Amf3Writers[pair.Key] = pair.Value;
         }
@@ -167,42 +168,33 @@ namespace RtmpSharp.IO
 
         public void Dispose()
         {
-            if (underlying != null)
-                underlying.Dispose();
+            underlying?.Dispose();
         }
 
+        #region helpers
 
-
-
-
-
-
-
-
-
-        #region Helper Methods
-        public long Length { get { return underlying.BaseStream.Length; } }
-        public long Position { get { return underlying.BaseStream.Position; } }
-        public bool DataAvailable { get { return Position < Length; } }
+        public long Length => underlying.BaseStream.Length;
+        public long Position => underlying.BaseStream.Position;
+        public bool DataAvailable => Position < Length;
 
         static IAmfItemWriter GetAmfWriter(AmfWriterMap writerMap, Type type)
         {
             IAmfItemWriter amfWriter;
 
-            // Use the writer specified within our dictionary, if it exists.
+            // use the writer specified within our dictionary, if it exists.
             if (writerMap.TryGetValue(type, out amfWriter))
                 return amfWriter;
 
-            // Try the lookup again but with the base type (so we can serialize enums and arrays,
+            // try the lookup again but with the base type (so we can serialize enums and arrays,
             // for example).
             if (type.BaseType != null && writerMap.TryGetValue(type.BaseType, out amfWriter))
                 return amfWriter;
 
-            // No writer exists. Create and cache the default one so we don't need to go through this
+            // no writer exists. Create and cache the default one so we don't need to go through this
             // expensive lookup again.
             lock (writerMap)
             {
-                // Check inside lock since type may have been added since our initial check
+                // check inside lock since type may have been added since our initial check
                 if (writerMap.TryGetValue(type, out amfWriter))
                     return amfWriter;
 
@@ -234,10 +226,12 @@ namespace RtmpSharp.IO
         {
             underlying.Write(value);
         }
+
         public void Write(byte[] value)
         {
             underlying.Write(value);
         }
+
         public void Write(byte[] bytes, int index, int count)
         {
             underlying.Write(bytes, index, count);
@@ -251,7 +245,7 @@ namespace RtmpSharp.IO
         public void WriteBytes(byte[] buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
 
             Write(buffer);
         }
@@ -260,6 +254,7 @@ namespace RtmpSharp.IO
         {
             Write((byte)marker);
         }
+
         internal void WriteMarker(Amf3TypeMarkers marker)
         {
             Write((byte)marker);
@@ -311,11 +306,11 @@ namespace RtmpSharp.IO
             this.Write(bytes, 0, bytes.Length);
         }
 
-        // Writes a 32-bit signed integer to the current position in the AMF stream using variable length unsigned 29-bit integer encoding.
+        // writes a 32-bit signed integer to the current position in the AMF stream using variable length unsigned 29-bit integer encoding.
         public void WriteUInt24(int value)
         {
             if (value < UInt29Range[0] || value > UInt29Range[1])
-                throw new ArgumentOutOfRangeException("value");
+                throw new ArgumentOutOfRangeException(nameof(value));
 
             var bytes = new byte[3];
             bytes[0] = (byte)(0xFF & (value >> 16));
@@ -333,15 +328,16 @@ namespace RtmpSharp.IO
         internal void WriteUtfPrefixed(string str)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
 
             var bytes = Encoding.UTF8.GetBytes(str);
             WriteUtfPrefixed(bytes);
         }
+
         void WriteUtfPrefixed(byte[] buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
 
             if (buffer.Length > ushort.MaxValue)
                 throw new SerializationException("string is larger than maximum encodable value.");
@@ -371,20 +367,18 @@ namespace RtmpSharp.IO
 
         #region Both
 
-        /// <summary>
-        /// Writes an object, starting in AMF0 encoding. If the AmfWriter's `objectEncoding` is 3,
-        /// then an AMF3 marker will be written and encoding will be upgraded to AMF3. Otherwise,
-        /// encoding will stay in AMF0. This method writes the type marker and string.
-        /// </summary>
+        // writes an object, starting in AMF0 encoding. If the AmfWriter's `encoding` is 3,
+        // then an AMF3 marker will be written and encoding will be upgraded to AMF3. otherwise,
+        // encoding will stay in AMF0. this method writes the type marker and string.
         public void WriteAmfItem(object data)
         {
             WriteAmfItem(objectEncoding, data);
         }
 
-        // This method is required because of the functionality specified by classes like `IDataOutput`.
-        public void WriteAmfItem(ObjectEncoding objectEncoding, object data)
+        // this method is required because of the functionality specified by classes like `IDataOutput`.
+        public void WriteAmfItem(ObjectEncoding encoding, object data)
         {
-            // Short circuit - no need to perform expensive operations to write a null
+            // if it's null, we don't need to do expensive operations to determine how to write it
             if (data == null)
             {
                 WriteMarker(Amf0TypeMarkers.Null);
@@ -393,9 +387,10 @@ namespace RtmpSharp.IO
 
             if (WriteAmf0ReferenceOnExistence(data))
                 return;
+
             var type = data.GetType();
 
-            switch (objectEncoding)
+            switch (encoding)
             {
                 case ObjectEncoding.Amf0:
                     var writer = GetAmfWriter(Amf0Writers, type);
@@ -406,7 +401,7 @@ namespace RtmpSharp.IO
                     WriteAmf3Item(data);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("objectEncoding");
+                    throw new ArgumentOutOfRangeException(nameof(encoding));
             }
         }
 
@@ -421,34 +416,34 @@ namespace RtmpSharp.IO
 
 
 
-        #region AMF0
+        #region amf0
 
         internal void AddAmf0Reference(object value)
         {
             amf0ObjectReferences.Add(value, amf0ObjectReferences.Count);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal bool WriteAmf0ReferenceOnExistence(object value)
         {
             int index;
-            if (amf0ObjectReferences.TryGetValue(value, out index))
-            {
-                WriteMarker(Amf0TypeMarkers.Reference);
-                WriteUInt16((ushort)amf0ObjectReferences[value]);
-                return true;
-            }
-            return false;
+            if (!amf0ObjectReferences.TryGetValue(value, out index))
+                return false;
+
+            WriteMarker(Amf0TypeMarkers.Reference);
+            WriteUInt16((ushort)amf0ObjectReferences[value]);
+            return true;
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf0StringSpecial(string str)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
 
             var bytes = Encoding.UTF8.GetBytes(str);
             var length = bytes.Length;
+
             if (length < ushort.MaxValue)
             {
                 WriteMarker(Amf0TypeMarkers.String);
@@ -465,20 +460,21 @@ namespace RtmpSharp.IO
         {
             WriteAmf0UtfLong(Encoding.UTF8.GetBytes(value));
         }
+
         void WriteAmf0UtfLong(byte[] buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
 
             // length written as 32-bit uint
             WriteUInt32((uint)buffer.Length);
             WriteBytes(buffer);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         public void WriteAmf0Item(object data)
         {
-            // Short circuit - no need to perform expensive operations to write a null
+            // if it's null, we don't need to do expensive operations to determine how to write it
             if (data == null)
             {
                 WriteMarker(Amf0TypeMarkers.Null);
@@ -493,11 +489,11 @@ namespace RtmpSharp.IO
             GetAmfWriter(Amf0Writers, type).WriteData(this, data);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf0AsObject(AsObject obj)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             AddAmf0Reference(obj);
             var anonymousObject = string.IsNullOrEmpty(obj.TypeName);
@@ -511,20 +507,20 @@ namespace RtmpSharp.IO
                 WriteAmf0Item(property.Value);
             }
 
-            // End of object denoted by zero-length field name, then end of object type marker
-            // Field names are length-prefixed UTF8 strings, so [0 length string, end of object type marker]
+            // end of object denoted by zero-length field name, then end of object type marker
+            // field names are length-prefixed utf8 strings, so [0 length string, end of object type marker]
             WriteUInt16(0);
             WriteMarker(Amf0TypeMarkers.ObjectEnd);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf0TypedObject(object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             if (SerializationContext == null)
-                throw new NullReferenceException("Cannot serialize objects because no SerializationContext was provided.");
+                throw new NullReferenceException("no serialization context was provided");
 
             AddAmf0Reference(obj);
 
@@ -533,7 +529,7 @@ namespace RtmpSharp.IO
 
             var classDescription = SerializationContext.GetClassDescription(type, obj);
             if (classDescription == null)
-                throw new SerializationException(string.Format("Couldn't get class description for {0}.", typeName));
+                throw new SerializationException($"couldn't get class description for {typeName}");
 
             WriteMarker(Amf0TypeMarkers.TypedObject);
             WriteUtfPrefixed(classDescription.Name);
@@ -543,8 +539,8 @@ namespace RtmpSharp.IO
                 WriteAmf0Item(member.GetValue(obj));
             }
 
-            // End of object denoted by zero-length field name, then end of object type marker
-            // Field names are length-prefixed UTF8 strings, so [0 length string, end of object type marker]
+            // end of object denoted by zero-length field name, then end of object type marker
+            // field names are length-prefixed utf8 strings, so [0 length string, end of object type marker]
             WriteUInt16(0);
             WriteMarker(Amf0TypeMarkers.ObjectEnd);
         }
@@ -561,7 +557,7 @@ namespace RtmpSharp.IO
             // """
 
             var time = value.ToUniversalTime();
-            var posixTime = time.Subtract(epoch);
+            var posixTime = time.Subtract(Epoch);
             WriteDouble((double)posixTime.TotalMilliseconds);
             // reserved for time zone info, but not used according to spec.
             WriteUInt16(0);
@@ -570,7 +566,7 @@ namespace RtmpSharp.IO
         internal void WriteAmf0XDocument(XDocument document)
         {
             if (document == null)
-                throw new ArgumentNullException("document");
+                throw new ArgumentNullException(nameof(document));
 
             AddAmf0Reference(document);
             var xml = document.ToString();
@@ -580,7 +576,7 @@ namespace RtmpSharp.IO
         internal void WriteAmf0XElement(XElement element)
         {
             if (element == null)
-                throw new ArgumentNullException("element");
+                throw new ArgumentNullException(nameof(element));
 
             AddAmf0Reference(element);
             var xml = element.ToString();
@@ -590,7 +586,7 @@ namespace RtmpSharp.IO
         internal void WriteAmf0Array(Array array)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
 
             AddAmf0Reference(array);
             WriteInt32(array.Length);
@@ -598,11 +594,11 @@ namespace RtmpSharp.IO
                 WriteAmf0Item(element);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf0AssociativeArray(IDictionary<string, object> dictionary)
         {
             if (dictionary == null)
-                throw new ArgumentNullException("dictionary");
+                throw new ArgumentNullException(nameof(dictionary));
 
             AddAmf0Reference(dictionary);
             WriteMarker(Amf0TypeMarkers.EcmaArray);
@@ -613,8 +609,8 @@ namespace RtmpSharp.IO
                 WriteAmf0Item(entry.Value);
             }
 
-            // End of object denoted by zero-length field name, then end of object type marker
-            // Field names are length-prefixed UTF8 strings, so [0 length string, end of object type marker]
+            // end of object denoted by zero-length field name, then end of object type marker
+            // field names are length-prefixed utf8 strings, so [0 length string, end of object type marker]
             WriteUInt16(0);
             WriteMarker(Amf0TypeMarkers.ObjectEnd);
         }
@@ -630,52 +626,56 @@ namespace RtmpSharp.IO
 
 
 
-        #region AMF3
+        #region amf3
 
         void AddAmf3Reference(string obj)
         {
             AddAmf3Reference(amf3StringReferences, obj);
         }
+
         void AddAmf3Reference(object obj)
         {
             AddAmf3Reference(amf3ObjectReferences, obj);
         }
+
         void AddAmf3Reference(Dictionary<object, int> referenceDictionary, object obj)
         {
             referenceDictionary.Add(obj, referenceDictionary.Count);
         }
-        // Writes `value` with the `inline object flag`. The object contents is expected to be written after this header.
+
+        // writes `value` with the `inline object flag`. the object contents is expected to be written after this header.
         void WriteAmf3InlineHeader(int value)
         {
             // 1 == inline object (not an object reference)
             WriteAmf3Int((value << 1) | 1);
         }
 
-        // If `obj` has already been written, then write the reference and returns true. If no object was written, returns false.
+        // if `obj` has already been written, then write the reference and returns true. If no object was written, returns false.
         bool WriteAmf3ReferenceOnExistence(string obj)
         {
             return WriteAmf3ReferenceOnExistence(amf3StringReferences, obj);
         }
+
         bool WriteAmf3ReferenceOnExistence(object obj)
         {
             return WriteAmf3ReferenceOnExistence(amf3ObjectReferences, obj);
         }
+
         bool WriteAmf3ReferenceOnExistence(Dictionary<object, int> referenceDictionary, object obj)
         {
             int index;
-            if (referenceDictionary.TryGetValue(obj, out index))
-            {
-                // 0 == not inline (an object reference)
-                WriteAmf3Int(index << 1);
-                return true;
-            }
-            return false;
+            if (!referenceDictionary.TryGetValue(obj, out index))
+                return false;
+
+            // 0 == not inline (an object reference)
+            WriteAmf3Int(index << 1);
+            return true;
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         public void WriteAmf3Item(object data)
         {
-            // Short circuit - no need to perform expensive operations to write a null
+            // if it's null, we don't need to do expensive operations to determine how to write it
             if (data == null)
             {
                 WriteAmf3Null();
@@ -687,13 +687,13 @@ namespace RtmpSharp.IO
             writer.WriteData(this, data);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf3Null()
         {
             WriteMarker(Amf3TypeMarkers.Null);
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf3BoolSpecial(bool value)
         {
             WriteMarker(value ? Amf3TypeMarkers.True : Amf3TypeMarkers.False);
@@ -702,7 +702,7 @@ namespace RtmpSharp.IO
         internal void WriteAmf3Array(Array array)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
 
             if (WriteAmf3ReferenceOnExistence(array))
                 return;
@@ -712,6 +712,7 @@ namespace RtmpSharp.IO
 
             // empty key signifies end of associative section of array
             WriteAmf3Utf(string.Empty);
+
             foreach (var element in array)
                 WriteAmf3Item(element);
         }
@@ -719,18 +720,20 @@ namespace RtmpSharp.IO
         internal void WriteAmf3Array(IEnumerable enumerable)
         {
             if (enumerable == null)
-                throw new ArgumentNullException("enumerable");
+                throw new ArgumentNullException(nameof(enumerable));
 
             if (WriteAmf3ReferenceOnExistence(enumerable))
                 return;
 
             var list = enumerable.ToList();
             AddAmf3Reference(list);
-            // Number of dense items.
+            
+            // number of dense items.
             WriteAmf3InlineHeader(list.Count);
 
             // empty key signifies end of associative section of array
             WriteAmf3Utf(string.Empty);
+
             foreach (var element in list)
                 WriteAmf3Item(element);
         }
@@ -738,13 +741,14 @@ namespace RtmpSharp.IO
         internal void WriteAmf3AssociativeArray(IDictionary<string, object> dictionary)
         {
             if (dictionary == null)
-                throw new ArgumentNullException("dictionary");
+                throw new ArgumentNullException(nameof(dictionary));
 
             if (WriteAmf3ReferenceOnExistence(dictionary))
                 return;
 
             AddAmf3Reference(dictionary);
-            // Number of dense items - zero for an associative array.
+            
+            // number of dense items - zero for an associative array.
             WriteAmf3InlineHeader(0);
 
             foreach (var pair in dictionary)
@@ -757,23 +761,23 @@ namespace RtmpSharp.IO
             WriteAmf3Utf(string.Empty);
         }
 
-        internal void WriteAmf3ByteArray(ByteArray byteArray)
+        internal void WriteAmf3ByteArray(ByteArray array)
         {
-            if (byteArray == null)
-                throw new ArgumentNullException("byteArray");
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
 
-            if (WriteAmf3ReferenceOnExistence(byteArray))
+            if (WriteAmf3ReferenceOnExistence(array))
                 return;
 
-            AddAmf3Reference(byteArray);
-            WriteAmf3InlineHeader((int)byteArray.Length);
-            WriteBytes(byteArray.MemoryStream.ToArray());
+            AddAmf3Reference(array);
+            WriteAmf3InlineHeader((int)array.Length);
+            WriteBytes(array.MemoryStream.ToArray());
         }
 
         internal void WriteAmf3Utf(string str)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
 
             if (str == string.Empty)
             {
@@ -797,7 +801,7 @@ namespace RtmpSharp.IO
                 return;
 
             var time = value.ToUniversalTime();
-            var posixTime = time.Subtract(epoch);
+            var posixTime = time.Subtract(Epoch);
             // not used except to denote inline object
             WriteAmf3InlineHeader(0);
             WriteDouble((double)posixTime.TotalMilliseconds);
@@ -833,10 +837,10 @@ namespace RtmpSharp.IO
             }
         }
 
-        /// <summary>This method writes the type marker and string.</summary>
+        // this method writes the type marker and string
         internal void WriteAmf3NumberSpecial(int value)
         {
-            // Write numbers that are out of range as a double.
+            // write numbers that are out of range as a double.
             if (value >= Int29Range[0] && value <= Int29Range[1])
             {
                 WriteMarker(Amf3TypeMarkers.Integer);
@@ -859,8 +863,7 @@ namespace RtmpSharp.IO
             //if (document == null)
             //    throw new ArgumentNullException("document");
 
-            var flattened = document == null ? string.Empty : document.ToString();
-            WriteAmf3Utf(flattened);
+            WriteAmf3Utf(document?.ToString() ?? string.Empty);
         }
 
         internal void WriteAmf3XElement(XElement element)
@@ -868,14 +871,13 @@ namespace RtmpSharp.IO
             //if (element == null)
             //    throw new ArgumentNullException("element");
 
-            var flattened = element == null ? string.Empty : element.ToString();
-            WriteAmf3Utf(flattened);
+            WriteAmf3Utf(element?.ToString() ?? string.Empty);
         }
 
         internal void WriteAmf3Vector<T>(bool writeTypeName, bool fixedSize, IList list, Action<T> writeElement)
         {
             if (list == null)
-                throw new ArgumentNullException("list");
+                throw new ArgumentNullException(nameof(list));
 
             if (WriteAmf3ReferenceOnExistence(list))
                 return;
@@ -894,18 +896,16 @@ namespace RtmpSharp.IO
         internal void WriteAmf3Dictionary(IDictionary dictionary)
         {
             if (dictionary == null)
-                throw new ArgumentNullException("dictionary");
+                throw new ArgumentNullException(nameof(dictionary));
 
             if (WriteAmf3ReferenceOnExistence(dictionary))
                 return;
 
-            var itemCount = dictionary.Count;
-
             AddAmf3Reference(dictionary);
-            WriteAmf3InlineHeader(itemCount);
+            WriteAmf3InlineHeader(dictionary.Count);
 
             // we don't support weakly referenced pairs (yet) - always use strong references
-            WriteByte((byte)0);
+            WriteByte(0);
             var enumerator = dictionary.GetEnumerator();
             while (enumerator.MoveNext())
             {
@@ -918,13 +918,14 @@ namespace RtmpSharp.IO
         internal void WriteAmf3Object(object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             if (SerializationContext == null)
-                throw new NullReferenceException("Cannot serialize objects because no SerializationContext was provided.");
+                throw new NullReferenceException("no serialization context was provided");
 
             if (WriteAmf3ReferenceOnExistence(obj))
                 return;
+
             AddAmf3Reference(obj);
 
             var classDescription = SerializationContext.GetClassDescription(obj);
@@ -964,7 +965,10 @@ namespace RtmpSharp.IO
                 {
                     var externalizable = obj as IExternalizable;
                     if (externalizable == null)
-                        throw new SerializationException("Externalizable class does not implement IExternalizable");
+                    {
+                        var type = obj.GetType();
+                        throw new SerializationException($"{type.FullName} ({classDescription.Name}) is marked as externalizable but does not implement IExternalizable");
+                    }
 
                     externalizable.WriteExternal(new DataOutput(this));
                 }
@@ -980,19 +984,23 @@ namespace RtmpSharp.IO
                     {
                         var dictionary = obj as IDictionary<string, object>;
                         if (dictionary == null)
-                            throw new SerializationException("Dynamic class does not implement IDictionary");
+                        {
+                            var type = obj.GetType();
+                            throw new SerializationException($"{type.FullName} is marked as dynamic but does not implement IDictionary");
+                        }
 
-                        foreach (KeyValuePair<string, object> entry in dictionary)
+                        foreach (var entry in dictionary)
                         {
                             WriteAmf3Utf(entry.Key);
                             WriteAmf3Item(entry.Value);
                         }
+
                         WriteAmf3Utf(string.Empty);
                     }
                 }
             }
         }
 
-        #endregion AMF3
+        #endregion
     }
 }

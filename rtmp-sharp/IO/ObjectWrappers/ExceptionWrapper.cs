@@ -14,18 +14,19 @@ namespace RtmpSharp.IO.ObjectWrappers
             "TargetSite"
         };
 
-        public ExceptionWrapper(SerializationContext serializationContext) : base(serializationContext)
+        public ExceptionWrapper(SerializationContext context) : base(context)
         {
         }
 
         public override ClassDescription GetClassDescription(object obj)
         {
-            var classDefinition = base.GetClassDescription(obj);
+            var klass = base.GetClassDescription(obj);
+
             return new ClassDescription(
-                classDefinition.Name,
-                classDefinition.Members.Where(x => !ExcludedMembers.Contains(x.Name)).ToArray(),
-                classDefinition.IsExternalizable,
-                classDefinition.IsDynamic);
+                klass.Name,
+                klass.Members.Where(x => !ExcludedMembers.Contains(x.Name)).ToArray(),
+                klass.IsExternalizable,
+                klass.IsDynamic);
         }
     }
 }

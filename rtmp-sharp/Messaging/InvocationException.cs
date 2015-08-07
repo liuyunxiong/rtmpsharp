@@ -27,7 +27,7 @@ namespace RtmpSharp.Messaging
         {
         }
 
-        public override string Message { get { return FaultString; } }
-        public override string StackTrace { get { return FaultDetail; } }
+        public override string Message => FaultString;
+        public override string StackTrace => FaultDetail;
     }
 }

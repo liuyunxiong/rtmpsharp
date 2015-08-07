@@ -23,7 +23,7 @@ namespace RtmpSharp.Net
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<Exception> CallbackException;
 
-        public bool IsDisconnected { get { return !hasConnected || disconnectsFired != 0; } }
+        public bool IsDisconnected => !hasConnected || disconnectsFired != 0;
 
         public string ClientId;
 
@@ -37,8 +37,8 @@ namespace RtmpSharp.Net
         readonly Uri uri;
         readonly ObjectEncoding objectEncoding;
         readonly TaskCallbackManager<int, object> callbackManager;
-        readonly SerializationContext serializationContext;
-        readonly RemoteCertificateValidationCallback certificateValidator = (sender, certificate, chain, errors) => true;
+        readonly SerializationContext context;
+        readonly RemoteCertificateValidationCallback validator = (sender, certificate, chain, errors) => true;
         RtmpPacketWriter writer;
         RtmpPacketReader reader;
         Thread writerThread;
@@ -49,31 +49,31 @@ namespace RtmpSharp.Net
 
         volatile int disconnectsFired;
 
-        public RtmpClient(Uri uri, SerializationContext serializationContext)
+        public RtmpClient(Uri uri, SerializationContext context)
         {
-            if (uri == null) throw new ArgumentNullException("uri");
-            if (serializationContext == null) throw new ArgumentNullException("serializationContext");
+            if (uri == null) throw new ArgumentNullException(nameof(uri));
+            if (context == null) throw new ArgumentNullException(nameof(context));
 
             var scheme = uri.Scheme.ToLowerInvariant();
-            if (scheme != "rtmp" && scheme != "rtmps")
-                throw new ArgumentException("Only rtmp:// and rtmps:// connections are supported.");
+            if (scheme != "rtmp" && scheme != "rtmps") throw new ArgumentException("only rtmp:// and rtmps:// schemes are supported");
 
             this.uri = uri;
-            this.serializationContext = serializationContext;
-            callbackManager = new TaskCallbackManager<int, object>();
+            this.context = context;
+            this.callbackManager = new TaskCallbackManager<int, object>();
         }
 
-        public RtmpClient(Uri uri, SerializationContext serializationContext, ObjectEncoding objectEncoding) : this(uri, serializationContext)
+        public RtmpClient(Uri uri, SerializationContext context, ObjectEncoding objectEncoding) : this(uri, context)
         {
             this.objectEncoding = objectEncoding;
         }
 
-        public RtmpClient(Uri uri, ObjectEncoding objectEncoding, SerializationContext serializationContext, RemoteCertificateValidationCallback certificateValidator)
+        public RtmpClient(Uri uri, ObjectEncoding objectEncoding, SerializationContext serializationContext, RemoteCertificateValidationCallback validator)
             : this(uri, serializationContext, objectEncoding)
         {
-            if (certificateValidator == null) throw new ArgumentNullException("certificateValidator");
+            if (validator == null)
+                throw new ArgumentNullException(nameof(validator));
 
-            this.certificateValidator = certificateValidator;
+            this.validator = validator;
         }
 
 
@@ -94,14 +94,8 @@ namespace RtmpSharp.Net
             try { writerThread.Abort(); } catch { }
             try { readerThread.Abort(); } catch { }
 
-            WrapCallback(() =>
-            {
-                if (Disconnected != null)
-                    Disconnected(this, e);
-            });
-
-            WrapCallback(() => callbackManager.SetExceptionForAll(
-                new ClientDisconnectedException(e.Description, e.Exception)));
+            WrapCallback(() => Disconnected?.Invoke(this, e));
+            WrapCallback(() => callbackManager.SetExceptionForAll(new ClientDisconnectedException(e.Description, e.Exception)));
         }
 
         Task<object> QueueCommandAsTask(Command command, int streamId, int messageStreamId, bool requireConnected = true)
@@ -158,8 +152,8 @@ namespace RtmpSharp.Net
             if (!c01.Random.SequenceEqual(s2.Random) || c01.Time != s2.Time)
                 throw new ProtocolViolationException();
             
-            writer = new RtmpPacketWriter(new AmfWriter(stream, serializationContext), ObjectEncoding.Amf3);
-            reader = new RtmpPacketReader(new AmfReader(stream, serializationContext));
+            writer = new RtmpPacketWriter(new AmfWriter(stream, context), ObjectEncoding.Amf3);
+            reader = new RtmpPacketReader(new AmfReader(stream, context));
             reader.EventReceived += EventReceivedCallback;
             reader.Disconnected += OnPacketProcessorDisconnected;
             writer.Disconnected += OnPacketProcessorDisconnected;
@@ -186,9 +180,9 @@ namespace RtmpSharp.Net
 
         TcpClient CreateTcpClient()
         {
-            if (LocalEndPoint == null)
-                return new TcpClient();
-            return new TcpClient(LocalEndPoint);
+            return LocalEndPoint == null
+                ? new TcpClient()
+                : new TcpClient(LocalEndPoint);
         }
 
         async Task<Stream> GetRtmpStreamAsync(TcpClient client)
@@ -199,7 +193,7 @@ namespace RtmpSharp.Net
                 case "rtmp":
                     return stream;
                 case "rtmps":
-                    var ssl = new SslStream(stream, false, certificateValidator);
+                    var ssl = new SslStream(stream, false, validator);
                     await ssl.AuthenticateAsClientAsync(uri.Host);
                     return ssl;
                 default:
@@ -224,11 +218,12 @@ namespace RtmpSharp.Net
 
                 case MessageType.DataAmf3:
 #if DEBUG
-                    // Have no idea what the contents of these packets are.
-                    // Study these packets if we receive them.
+                    // have no idea what the contents of these packets are.
+                    // study these packets if we receive them.
                     System.Diagnostics.Debugger.Break();
 #endif
                     break;
+
                 case MessageType.CommandAmf3:
                 case MessageType.DataAmf0:
                 case MessageType.CommandAmf0:
@@ -236,48 +231,51 @@ namespace RtmpSharp.Net
                     var call = command.MethodCall;
 
                     var param = call.Parameters.Length == 1 ? call.Parameters[0] : call.Parameters;
-                    if (call.Name == "_result")
+                    switch (call.Name)
                     {
-                        // unwrap Flex class, if present
-                        var ack = param as AcknowledgeMessage;
-                        callbackManager.SetResult(command.InvokeId, ack != null ? ack.Body : param);
-                    }
-                    else if (call.Name == "_error")
-                    {
-                        // unwrap Flex class, if present
-                        var error = param as ErrorMessage;
-                        callbackManager.SetException(command.InvokeId, error != null ? new InvocationException(error) : new InvocationException());
-                    }
-                    else if (call.Name == "receive")
-                    {
-                        var message = param as AsyncMessage;
-                        if (message == null)
+                        case "_result":
+                            // unwrap Flex class, if present
+                            var ack = param as AcknowledgeMessage;
+                            callbackManager.SetResult(command.InvokeId, ack != null ? ack.Body : param);
                             break;
 
-                        object subtopicObject;
-                        message.Headers.TryGetValue(AsyncMessageHeaders.Subtopic, out subtopicObject);
+                        case "_error":
+                            // unwrap Flex class, if present
+                            var error = param as ErrorMessage;
+                            callbackManager.SetException(command.InvokeId, error != null ? new InvocationException(error) : new InvocationException());
+                            break;
 
-                        var dsSubtopic = subtopicObject as string;
-                        var clientId = message.ClientId;
-                        var body = message.Body;
+                        case "receive":
+                            var message = param as AsyncMessage;
+                            if (message == null)
+                                break;
 
-                        WrapCallback(() =>
-                        {
-                            if (MessageReceived != null)
-                                MessageReceived(this, new MessageReceivedEventArgs(clientId, dsSubtopic, body));
-                        });
-                    }
-                    else if (call.Name == "onstatus")
-                    {
-                        System.Diagnostics.Debug.Print("Received status.");
-                    }
-                    else
-                    {
+                            object subtopicObject;
+                            message.Headers.TryGetValue(AsyncMessageHeaders.Subtopic, out subtopicObject);
+
+                            var dsSubtopic = subtopicObject as string;
+                            var clientId = message.ClientId;
+                            var body = message.Body;
+
+                            WrapCallback(() =>
+                            {
+                                if (MessageReceived != null)
+                                    MessageReceived(this, new MessageReceivedEventArgs(clientId, dsSubtopic, body));
+                            });
+                            break;
+
+                        case "onstatus":
+                            System.Diagnostics.Debug.Print("Received status.");
+                            break;
+
+                        default:
 #if DEBUG
-                        System.Diagnostics.Debug.Print("Unknown RTMP Command: " + call.Name);
-                        System.Diagnostics.Debugger.Break();
+                            System.Diagnostics.Debug.Print("Unknown RTMP Command: " + call.Name);
+                            System.Diagnostics.Debugger.Break();
 #endif
+                            break;
                     }
+
                     break;
             }
         }
@@ -292,12 +290,11 @@ namespace RtmpSharp.Net
 
         public async Task<T> InvokeAsync<T>(string method, object[] arguments)
         {
-            var invoke = new InvokeAmf0
+            var result = await QueueCommandAsTask(new InvokeAmf0
             {
                 MethodCall = new Method(method, arguments),
                 InvokeId = GetNextInvokeId()
-            };
-            var result = await QueueCommandAsTask(invoke, 3, 0);
+            }, 3, 0);
             return (T)MiniTypeConverter.ConvertTo(result, typeof(T));
         }
 
@@ -324,12 +321,11 @@ namespace RtmpSharp.Net
                 }
             };
 
-            var invoke = new InvokeAmf3()
+            var result = await QueueCommandAsTask(new InvokeAmf3()
             {
                 InvokeId = GetNextInvokeId(),
                 MethodCall = new Method(null, new object[] { remotingMessage })
-            };
-            var result = await QueueCommandAsTask(invoke, 3, 0);
+            }, 3, 0);
             return (T)MiniTypeConverter.ConvertTo(result, typeof(T));
         }
 
@@ -381,6 +377,7 @@ namespace RtmpSharp.Net
                     { AsyncMessageHeaders.Subtopic, subtopic }
                 }
             };
+
             return await InvokeAsync<string>(null, message) == "success";
         }
 
@@ -399,6 +396,7 @@ namespace RtmpSharp.Net
                     { AsyncMessageHeaders.Subtopic, subtopic }
                 }
             };
+
             return await InvokeAsync<string>(null, message) == "success";
         }
 
@@ -409,8 +407,9 @@ namespace RtmpSharp.Net
                 ClientId = ClientId,
                 Destination = string.Empty, // destination must not be null to work on some servers
                 Operation = CommandOperation.Login,
-                Body = Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", username, password))),
+                Body = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}")),
             };
+
             return await InvokeAsync<string>(null, message) == "success";
         }
 
@@ -462,17 +461,18 @@ namespace RtmpSharp.Net
                 }
                 catch (Exception ex)
                 {
-                    if (CallbackException != null)
-                        CallbackException(this, ex);
+                    CallbackException?.Invoke(this, ex);
                 }
             }
+#if DEBUG && BREAK_ON_EXCEPTED_CALLBACK
             catch (Exception unhandled)
             {
-#if DEBUG && BREAK_ON_EXCEPTED_CALLBACK
                 System.Diagnostics.Debug.Print("UNHANDLED EXCEPTION IN CALLBACK: {0}: {1} @ {2}", unhandled.GetType(), unhandled.Message, unhandled.StackTrace);
                 System.Diagnostics.Debugger.Break();
+        }
+#else
+            catch { }
 #endif
-            }
         }
 
         static Task<object> CreateExceptedTask(Exception exception)

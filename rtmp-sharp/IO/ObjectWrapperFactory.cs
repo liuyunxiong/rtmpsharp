@@ -9,20 +9,20 @@ namespace RtmpSharp.IO
     {
         static readonly string ExternalizableTypeName = typeof(IExternalizable).FullName;
 
-        readonly SerializationContext serializationContext;
+        readonly SerializationContext context;
 
         readonly IObjectWrapper defaultWrapper;
         readonly Dictionary<Type, IObjectWrapper> wrappers = new Dictionary<Type, IObjectWrapper>();
         
-        public ObjectWrapperFactory(SerializationContext serializationContext)
+        public ObjectWrapperFactory(SerializationContext context)
         {
-            this.serializationContext = serializationContext;
+            this.context = context;
             
-            defaultWrapper = new BasicObjectWrapper(serializationContext);
+            defaultWrapper = new BasicObjectWrapper(context);
 
-            wrappers[typeof(AsObject)] = new AsObjectWrapper(serializationContext);
-            wrappers[typeof(IExternalizable)] = new ExternalizableWrapper(serializationContext);
-            wrappers[typeof(Exception)] = new ExceptionWrapper(serializationContext);
+            wrappers[typeof(AsObject)] = new AsObjectWrapper(context);
+            wrappers[typeof(IExternalizable)] = new ExternalizableWrapper(context);
+            wrappers[typeof(Exception)] = new ExceptionWrapper(context);
         }
 
         public IObjectWrapper GetInstance(Type type)

@@ -154,13 +154,17 @@ namespace RtmpSharp.IO.ObjectWrappers
 
             public static FieldsAndProperties GetSerializableFields(Type type)
             {
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(x => x.GetCustomAttributes(typeof(TransientAttribute), true).Length == 0)
-                    .Where(x => x.GetGetMethod()?.GetParameters().Length == 0); // skip if not a "pure" get property, aka has parameters (eg `class[int index]`)
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where(x => x.GetMethod != null && x.SetMethod != null)
+                    .Where(x => (x.GetMethod.IsPublic && x.SetMethod.IsPublic) || x.GetCustomAttributes<SerializedNameAttribute>().Any())
+                    .Where(x => x.GetMethod.GetParameters().Length == 0) // require this property to have a public getter and setter; skip if not a "pure" get property, aka has parameters (eg `class[int index]`)
+                    .Where(x => x.SetMethod.GetParameters().Length == 1)
+                    .Where(x => !x.GetCustomAttributes<TransientAttribute>(true).Any());
 
-                var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(x => x.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
-                    .Where(x => x.GetCustomAttributes(typeof(TransientAttribute), true).Length == 0);
+                var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where(x => x.IsPublic || x.GetCustomAttributes<SerializedNameAttribute>().Any())
+                    .Where(x => !x.GetCustomAttributes<NonSerializedAttribute>(true).Any())
+                    .Where(x => !x.GetCustomAttributes<TransientAttribute>(true).Any());
 
                 return new FieldsAndProperties()
                 {

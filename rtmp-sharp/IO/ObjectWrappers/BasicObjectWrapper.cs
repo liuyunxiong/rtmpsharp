@@ -8,7 +8,7 @@ namespace RtmpSharp.IO.ObjectWrappers
 {
     class BasicObjectWrapper : IObjectWrapper
     {
-        // TODO: Turn this into a real cache... which expires old items.
+        // todo: make this a real cache... which expires old items.
         readonly Dictionary<Type, ClassDescription> cache = new Dictionary<Type, ClassDescription>();
 
         readonly SerializationContext context;
@@ -21,7 +21,7 @@ namespace RtmpSharp.IO.ObjectWrappers
             this.context = context;
         }
 
-        // Gets the class definition for an object `obj`, applying transformations like type name mappings
+        // gets the class definition for an object `obj`, applying transformations like type name mappings
         public virtual ClassDescription GetClassDescription(object obj)
         {
             if (obj == null)
@@ -77,7 +77,7 @@ namespace RtmpSharp.IO.ObjectWrappers
 
         class BasicObjectClassDescription : ClassDescription
         {
-            // Because we are cached by the `BasicObjectWrapper`, speed up lookups so that read deserialisation is (slightly) faster.
+            // because we are cached by the `BasicObjectWrapper`, speed up lookups so that read deserialisation is (slightly) faster.
             Dictionary<string, IMemberWrapper> MemberLookup { get; }
 
             internal BasicObjectClassDescription(string name, IMemberWrapper[] members, bool externalizable, bool dynamic)
@@ -97,9 +97,9 @@ namespace RtmpSharp.IO.ObjectWrappers
 
         class BasicMemberWrapper : IMemberWrapper
         {
-            bool isField;
-            PropertyInfo propertyInfo;
-            FieldInfo fieldInfo;
+            readonly bool isField;
+            readonly PropertyInfo propertyInfo;
+            readonly FieldInfo fieldInfo;
 
             public string Name { get; }
             public string SerializedName { get; }
@@ -154,17 +154,13 @@ namespace RtmpSharp.IO.ObjectWrappers
 
             public static FieldsAndProperties GetSerializableFields(Type type)
             {
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Where(x => x.GetMethod != null && x.SetMethod != null)
-                    .Where(x => (x.GetMethod.IsPublic && x.SetMethod.IsPublic) || x.GetCustomAttributes<SerializedNameAttribute>().Any())
-                    .Where(x => x.GetMethod.GetParameters().Length == 0) // require this property to have a public getter and setter; skip if not a "pure" get property, aka has parameters (eg `class[int index]`)
-                    .Where(x => x.SetMethod.GetParameters().Length == 1)
-                    .Where(x => !x.GetCustomAttributes<TransientAttribute>(true).Any());
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(x => x.GetCustomAttributes(typeof(TransientAttribute), true).Length == 0)
+                    .Where(x => x.GetGetMethod()?.GetParameters().Length == 0); // skip if not a "pure" get property, aka has parameters (eg `class[int index]`)
 
-                var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Where(x => x.IsPublic || x.GetCustomAttributes<SerializedNameAttribute>().Any())
-                    .Where(x => !x.GetCustomAttributes<NonSerializedAttribute>(true).Any())
-                    .Where(x => !x.GetCustomAttributes<TransientAttribute>(true).Any());
+                var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(x => x.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0)
+                    .Where(x => x.GetCustomAttributes(typeof(TransientAttribute), true).Length == 0);
 
                 return new FieldsAndProperties()
                 {

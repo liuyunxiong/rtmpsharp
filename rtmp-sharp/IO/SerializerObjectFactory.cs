@@ -32,7 +32,7 @@ namespace RtmpSharp.IO
         public object Create(string typeName) => Create(remoteToLocalNames[typeName]);
 
 
-        // add the type to the list of creatable types
+        // Add the type to the list of creatable types
         public void Register(Type type)
         {
             if (type.IsEnum || constructors.ContainsKey(type))

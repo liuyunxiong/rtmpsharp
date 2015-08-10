@@ -32,64 +32,17 @@ namespace RtmpSharp.IO.AMF3
             }
         }
 
-        public string ReadUtf()
-        {
-            return reader.ReadUtf();
-        }
-
-        public string ReadUtf(int length)
-        {
-            return reader.ReadUtf(length);
-        }
-
-        public int ReadUInt24()
-        {
-            return reader.ReadUInt24();
-        }
-
-        public ushort ReadUInt16()
-        {
-            return reader.ReadUInt16();
-        }
-
-        public int ReadInt32()
-        {
-            return reader.ReadInt32();
-        }
-
-        public uint ReadUInt32()
-        {
-            return reader.ReadUInt32();
-        }
-
-        public short ReadInt16()
-        {
-            return reader.ReadInt16();
-        }
-
-        public float ReadFloat()
-        {
-            return reader.ReadFloat();
-        }
-
-        public double ReadDouble()
-        {
-            return reader.ReadDouble();
-        }
-
-        public byte[] ReadBytes(int count)
-        {
-            return reader.ReadBytes(count);
-        }
-
-        public byte ReadByte()
-        {
-            return reader.ReadByte();
-        }
-
-        public bool ReadBoolean()
-        {
-            return reader.ReadBoolean();
-        }
+        public bool ReadBoolean() => reader.ReadBoolean();
+        public byte ReadByte() => reader.ReadByte();
+        public byte[] ReadBytes(int count) => reader.ReadBytes(count);
+        public double ReadDouble() => reader.ReadDouble();
+        public float ReadFloat() => reader.ReadFloat();
+        public short ReadInt16() => reader.ReadInt16();
+        public ushort ReadUInt16() => reader.ReadUInt16();
+        public int ReadUInt24() => reader.ReadUInt24();
+        public int ReadInt32() => reader.ReadInt32();
+        public uint ReadUInt32() => reader.ReadUInt32();
+        public string ReadUtf() => reader.ReadUtf();
+        public string ReadUtf(int length) => reader.ReadUtf(length);
     }
 }

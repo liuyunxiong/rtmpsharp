@@ -35,64 +35,17 @@ namespace RtmpSharp.IO.AMF3
             }
         }
 
-        public void WriteBoolean(bool value)
-        {
-            writer.WriteBoolean(value);
-        }
-
-        public void WriteUInt32(uint value)
-        {
-            writer.WriteUInt32(value);
-        }
-
-        public void WriteByte(byte value)
-        {
-            writer.WriteByte(value);
-        }
-
-        public void WriteBytes(byte[] buffer)
-        {
-            writer.WriteBytes(buffer);
-        }
-
-        public void WriteDouble(double value)
-        {
-            writer.WriteDouble(value);
-        }
-
-        public void WriteFloat(float value)
-        {
-            writer.WriteFloat(value);
-        }
-
-        public void WriteInt16(short value)
-        {
-            writer.WriteInt16(value);
-        }
-
-        public void WriteInt32(int value)
-        {
-            writer.WriteInt32(value);
-        }
-
-        public void WriteUInt16(ushort value)
-        {
-            writer.WriteUInt16(value);
-        }
-
-        public void WriteUInt24(int value)
-        {
-            writer.WriteUInt24(value);
-        }
-
-        public void WriteUtf(string value)
-        {
-            writer.WriteUtfPrefixed(value);
-        }
-
-        public void WriteUtfBytes(string value)
-        {
-            writer.WriteBytes(Encoding.UTF8.GetBytes(value));
-        }
+        public void WriteBoolean(bool value) => writer.WriteBoolean(value);
+        public void WriteUInt32(uint value) => writer.WriteUInt32(value);
+        public void WriteByte(byte value) => writer.WriteByte(value);
+        public void WriteBytes(byte[] buffer) => writer.WriteBytes(buffer);
+        public void WriteDouble(double value) => writer.WriteDouble(value);
+        public void WriteFloat(float value) => writer.WriteFloat(value);
+        public void WriteInt16(short value) => writer.WriteInt16(value);
+        public void WriteInt32(int value) => writer.WriteInt32(value);
+        public void WriteUInt16(ushort value) => writer.WriteUInt16(value);
+        public void WriteUInt24(int value) => writer.WriteUInt24(value);
+        public void WriteUtf(string value) => writer.WriteUtfPrefixed(value);
+        public void WriteUtfBytes(string value) => writer.WriteBytes(Encoding.UTF8.GetBytes(value));
     }
 }

@@ -20,12 +20,11 @@ namespace RtmpSharp.Net
 
         readonly AmfWriter writer;
         readonly Dictionary<int, RtmpHeader> rtmpHeaders;
-        readonly Dictionary<int, RtmpPacket> rtmpPackets;
         readonly ConcurrentQueue<RtmpPacket> queuedPackets;
         readonly AutoResetEvent packetAvailableEvent;
         readonly ObjectEncoding objectEncoding;
 
-        // This is defined by the spec
+        // defined by the spec
         const int DefaultChunkSize = 128;
         int writeChunkSize = DefaultChunkSize;
 
@@ -35,7 +34,6 @@ namespace RtmpSharp.Net
             this.writer = writer;
 
             rtmpHeaders = new Dictionary<int, RtmpHeader>();
-            rtmpPackets = new Dictionary<int, RtmpPacket>();
             queuedPackets = new ConcurrentQueue<RtmpPacket>();
             packetAvailableEvent = new AutoResetEvent(false);
 
@@ -128,12 +126,11 @@ namespace RtmpSharp.Net
             rtmpHeaders.TryGetValue(streamId, out previousHeader);
 
             rtmpHeaders[streamId] = header;
-            rtmpPackets[streamId] = packet;
 
             WriteMessageHeader(header, previousHeader);
 
             var first = true;
-            for (int i = 0; i < header.PacketLength; i += writeChunkSize)
+            for (var i = 0; i < header.PacketLength; i += writeChunkSize)
             {
                 if (!first)
                     WriteBasicHeader(ChunkMessageHeaderType.Continuation, header.StreamId);
@@ -244,7 +241,7 @@ namespace RtmpSharp.Net
                 case MessageType.DataAmf0:
                     return GetMessageBytes(message, (w, o) => WriteData(w, o, ObjectEncoding.Amf0));
                 case MessageType.SharedObjectAmf0:
-                    return new byte[0]; // TODO: `SharedObject`s
+                    return new byte[0]; // todo: `SharedObject`s
                 case MessageType.CommandAmf0:
                     return GetMessageBytes(message, (w, o) => WriteCommandOrData(w, o, ObjectEncoding.Amf0));
 
@@ -252,7 +249,7 @@ namespace RtmpSharp.Net
                 case MessageType.DataAmf3:
                     return GetMessageBytes(message, (w, o) => WriteData(w, o, ObjectEncoding.Amf3));
                 case MessageType.SharedObjectAmf3:
-                    return new byte[0]; // TODO: `SharedObject`s
+                    return new byte[0]; // todo: `SharedObject`s
                 case MessageType.CommandAmf3:
                     return GetMessageBytes(message, (w, o) =>
                     {
@@ -261,9 +258,9 @@ namespace RtmpSharp.Net
                     });
 
                 case MessageType.Aggregate:
-                    // TODO: Aggregate messages
+                    // todo: Aggregate messages
                     System.Diagnostics.Debugger.Break();
-                    return new byte[0]; // TODO: `Aggregate`
+                    return new byte[0]; // todo: `Aggregate`
                 default:
                     throw new ArgumentOutOfRangeException("Unknown RTMP message type: " + (int)header.MessageType);
             }

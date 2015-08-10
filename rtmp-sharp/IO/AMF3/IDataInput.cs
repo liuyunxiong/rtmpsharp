@@ -16,6 +16,5 @@ namespace RtmpSharp.IO.AMF3
         uint ReadUInt32();
         string ReadUtf();
         string ReadUtf(int length);
-        
     }
 }

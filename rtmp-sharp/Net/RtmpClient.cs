@@ -55,7 +55,8 @@ namespace RtmpSharp.Net
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             var scheme = uri.Scheme.ToLowerInvariant();
-            if (scheme != "rtmp" && scheme != "rtmps") throw new ArgumentException("only rtmp:// and rtmps:// schemes are supported");
+            if (scheme != "rtmp" && scheme != "rtmps")
+                throw new ArgumentException($"the scheme {scheme} is not supported. only rtmp:// and rtmps:// schemes are supported");
 
             this.uri = uri;
             this.context = context;
@@ -197,7 +198,7 @@ namespace RtmpSharp.Net
                     await ssl.AuthenticateAsClientAsync(uri.Host);
                     return ssl;
                 default:
-                    throw new ArgumentException("The specified scheme is not supported.");
+                    throw new ArgumentException($"the scheme '{uri.Scheme}' is not supported");
             }
         }
 
@@ -257,20 +258,16 @@ namespace RtmpSharp.Net
                             var clientId = message.ClientId;
                             var body = message.Body;
 
-                            WrapCallback(() =>
-                            {
-                                if (MessageReceived != null)
-                                    MessageReceived(this, new MessageReceivedEventArgs(clientId, dsSubtopic, body));
-                            });
+                            WrapCallback(() => MessageReceived?.Invoke(this, new MessageReceivedEventArgs(clientId, dsSubtopic, body)));
                             break;
 
                         case "onstatus":
-                            System.Diagnostics.Debug.Print("Received status.");
+                            System.Diagnostics.Debug.Print("received status");
                             break;
 
                         default:
 #if DEBUG
-                            System.Diagnostics.Debug.Print("Unknown RTMP Command: " + call.Name);
+                            System.Diagnostics.Debug.Print($"unknown rtmp command: {call.Name}");
                             System.Diagnostics.Debugger.Break();
 #endif
                             break;
@@ -455,21 +452,15 @@ namespace RtmpSharp.Net
         {
             try
             {
-                try
-                {
-                    action();
-                }
-                catch (Exception ex)
-                {
-                    CallbackException?.Invoke(this, ex);
-                }
+                try { action(); }
+                catch (Exception ex) { CallbackException?.Invoke(this, ex); }
             }
 #if DEBUG && BREAK_ON_EXCEPTED_CALLBACK
             catch (Exception unhandled)
             {
                 System.Diagnostics.Debug.Print("UNHANDLED EXCEPTION IN CALLBACK: {0}: {1} @ {2}", unhandled.GetType(), unhandled.Message, unhandled.StackTrace);
                 System.Diagnostics.Debugger.Break();
-        }
+            }
 #else
             catch { }
 #endif
@@ -485,7 +476,7 @@ namespace RtmpSharp.Net
 
 
 
-        #region Handshake struct
+        #region handshake
 
         const int HandshakeRandomSize = 1528;
 
@@ -548,6 +539,7 @@ namespace RtmpSharp.Net
                 }
             }
         }
+
         #endregion
     }
 }

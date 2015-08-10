@@ -14,7 +14,7 @@ namespace RtmpSharp.Net
 
         public StatusAsObject(Exception exception)
         {
-            // TODO: Complete AsObject member initialization
+            // todo: complete AsObject member initialization
             this.exception = exception;
         }
 

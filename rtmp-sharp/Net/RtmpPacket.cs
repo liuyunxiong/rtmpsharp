@@ -10,7 +10,7 @@ namespace RtmpSharp.Net
         public byte[] Buffer { get; private set; }
         public int Length { get; private set; }
         public int CurrentLength { get; private set; }
-        public bool IsComplete { get { return Length == CurrentLength; } }
+        public bool IsComplete => Length == CurrentLength;
 
         public RtmpPacket(RtmpHeader header)
         {

@@ -9,9 +9,10 @@ using System.Runtime.Serialization;
 
 namespace RtmpSharp.Net
 {
-    // Shared objects not implemented (yet)
-    // AMF3 data messages aren't handled (what's in them?)
-    // Multimedia packets aren't handled
+    // not implemented:
+    //  - shared objects
+    //  - amf3 data messages
+    //  - multimedia packets
     class RtmpPacketReader
     {
         public bool Continue { get; set; }
@@ -19,36 +20,26 @@ namespace RtmpSharp.Net
         public event EventHandler<EventReceivedEventArgs> EventReceived;
         public event EventHandler<ExceptionalEventArgs> Disconnected;
 
-        AmfReader reader;
+        readonly AmfReader reader;
 
-        // Defined by the spec
+        readonly Dictionary<int, RtmpHeader> rtmpHeaders;
+        readonly Dictionary<int, RtmpPacket> rtmpPackets;
+
+        // defined by the spec
         const int DefaultChunkSize = 128;
-
-        Dictionary<int, RtmpHeader> rtmpHeaders;
-        Dictionary<int, RtmpPacket> rtmpPackets;
         int readChunkSize = DefaultChunkSize;
 
         public RtmpPacketReader(AmfReader reader)
         {
             this.reader = reader;
-
-            rtmpHeaders = new Dictionary<int, RtmpHeader>();
-            rtmpPackets = new Dictionary<int, RtmpPacket>();
+            this.rtmpHeaders = new Dictionary<int, RtmpHeader>();
+            this.rtmpPackets = new Dictionary<int, RtmpPacket>();
 
             Continue = true;
         }
 
-        void OnEventReceived(EventReceivedEventArgs e)
-        {
-            if (EventReceived != null)
-                EventReceived(this, e);
-        }
-
-        void OnDisconnected(ExceptionalEventArgs e)
-        {
-            if (Disconnected != null)
-                Disconnected(this, e);
-        }
+        void OnEventReceived(EventReceivedEventArgs e) => EventReceived?.Invoke(this, e);
+        void OnDisconnected(ExceptionalEventArgs e) => Disconnected?.Invoke(this, e);
 
         public void ReadLoop()
         {
@@ -91,13 +82,8 @@ namespace RtmpSharp.Net
             }
             catch (Exception ex)
             {
-#if DEBUG
-                System.Diagnostics.Debug.Print("Exception: {0} at {1}", ex, ex.StackTrace);
-                if (ex.InnerException != null)
-                {
-                    var inner = ex.InnerException;
-                    System.Diagnostics.Debug.Print("InnerException: {0} at {1}", inner, inner.StackTrace);
-                }
+#if DEBUG && WITH_KONSEKI
+                Kon.DebugException($"exception occurred", ex);
 #endif
 
                 OnDisconnected(new ExceptionalEventArgs("rtmp-packet-reader", ex));
@@ -107,16 +93,20 @@ namespace RtmpSharp.Net
         static int GetChunkStreamId(byte chunkBasicHeaderByte, AmfReader reader)
         {
             var chunkStreamId = chunkBasicHeaderByte & 0x3F;
+            switch (chunkStreamId)
+            {
+                // 2 bytes
+                case 0:
+                    return reader.ReadByte() + 64;
 
-            // 2 bytes
-            if (chunkStreamId == 0)
-                return reader.ReadByte() + 64;
+                // 3 bytes
+                case 1:
+                    return reader.ReadByte() + reader.ReadByte() * 256 + 64;
 
-            // 3 bytes
-            if (chunkStreamId == 1)
-                return reader.ReadByte() + reader.ReadByte() * 256 + 64;
-
-            return chunkStreamId;
+                // 1 byte
+                default:
+                    return chunkStreamId;
+            }
         }
 
         RtmpHeader ReadHeader()
@@ -243,18 +233,18 @@ namespace RtmpSharp.Net
                     });
 
 
-                // Aggregated messages only seem to be used in audio and video streams, so we should be OK until we need multimedia.
+                // aggregated messages only seem to be used in audio and video streams, so we should be OK until we need multimedia.
                 // case MessageType.Aggregate:
 
                 default:
 #if DEBUG && RTMP_SHARP_DEV
-                    // Find out how to handle this message type.
+                    // find out how to handle this message type.
                     System.Diagnostics.Debugger.Break();
 #endif
                     break;
             }
 
-            // Skip messages we don't understand
+            // skip messages we don't understand
             return null;
         }
 

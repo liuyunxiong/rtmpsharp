@@ -12,7 +12,7 @@ namespace Complete.IO.Zlib
 
         uint checksum = 1;
 
-        public int Checksum { get { return (int)checksum; } }
+        public int Checksum => (int)checksum;
 
         public void Update(byte[] buffer, int offset, int count)
         {

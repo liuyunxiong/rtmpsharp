@@ -1,6 +1,7 @@
 # rtmp-sharp
 
-A fast, lightweight library RTMP(S) client library for .NET. It's used in astralfoxy's Wintermint client, as well as in many other high-traffic websites.
+A fast, lightweight library RTMP(S) client library for .NET. It's known to be in many high-traffic
+websites especially around the video game streaming and League of Legends spheres.
 
 ## Example usage
 
@@ -8,7 +9,7 @@ A fast, lightweight library RTMP(S) client library for .NET. It's used in astral
 
 ```csharp
 var client = new RtmpClient(
-	new Uri("rtmps://sandbox.astralfoxy.com"),
+	new Uri("rtmps://ingress.winky.com"),
 	new SerializationContext(),
 	ObjectEncoding.Amf3);
 
@@ -27,7 +28,7 @@ objects*.
 The `SerializationContext` isolates different serialization domains to prevent
 attacks from untrusted servers. It also negates issues that occur when there
 is only a single global context: if two different domains (eg, twitch.tv and
-astralfoxy.com) both have `ServiceStatus` objects, then it would be impossible
+winky.com) both have `ServiceStatus` objects, then it would be impossible
 to tell which one to use. The `SerializationContext` allows us to specify
 different objects for each context.
 
@@ -60,11 +61,11 @@ code with the `SerializedName` attribute.
 ```csharp
 namespace Client
 {
-    // Without annotation: `Client.WintermintServiceStatus`
-    // With annotation: `org.astralfoxy.ServiceStatus`
+    // Without annotation: `Client.WinkyServiceStatus`
+    // With annotation: `org.winky.ServiceStatus`
     [Serializable]
-    [SerializedName("org.astralfoxy.ServiceStatus")]
-    public class WintermintServiceStatus
+    [SerializedName("org.winky.ServiceStatus")]
+    public class WinkyServiceStatus
     {
         // Without annotation: `Difficulty`
         // With annotation: `hardness`
@@ -87,7 +88,6 @@ When time allows, I'll fix these.
 
 ## License
 
-- `rtmp-sharp` MIT licensed
+- `rtmp-sharp` is MIT licensed
 - Feel free to use it however you want
-- But I'd love to hear about how you're using it! Email me at `foxy::astralfoxy:com`
 - Please contribute any improvements you make back to this repository

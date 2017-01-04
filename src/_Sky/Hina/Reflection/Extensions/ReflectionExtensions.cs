@@ -8,7 +8,7 @@ namespace Hina.Reflection
     {
         public static bool ImplementsGenericInterface(this TypeInfo type, Type target)
         {
-            foreach (var @interface in type.GetInterfaces())
+            foreach (var @interface in type.ImplementedInterfaces)
             {
                 var info = @interface.GetTypeInfo();
 

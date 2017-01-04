@@ -150,7 +150,7 @@ namespace RtmpSharp
 
         // may return null
         static bool GetGenericInterface(TypeInfo type, Type generic, out Type @interface)
-            => (@interface = type.GetInterfaces().FirstOrDefault(x => x.GetTypeInfo().IsGenericType && x.GetGenericTypeDefinition() == generic)) != null;
+            => (@interface = type.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsGenericType && x.GetGenericTypeDefinition() == generic)) != null;
     }
 
     static class Helper

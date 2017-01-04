@@ -1,7 +1,12 @@
 # RtmpSharp (v0.2)
 
+[![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
+
 A fast, lightweight, data-oriented rtmp + rtmps client library for .NET Desktop and .NET Core. Used in many high-
 traffic websites and systems, especially around the game streaming and League of Legends spheres.
+
+[Install from NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
+
 
 ## Example Usage
 
@@ -22,7 +27,7 @@ var options = new RtmpClient.Options()
 };
 
 // connect to the winky and invoke the `musical.search` service.
-var client = RtmpClient.ConnectAsync(options);
+var client = await RtmpClient.ConnectAsync(options);
 var songs  = await client.InvokeAsync<string[]>("musical", "search", new { name = "kiss me" });
 ```
 
@@ -72,7 +77,7 @@ namespace Client
         public string Difficulty;
 
         // ignored from serialization
-        [RtmpIgnore("gameId")]
+        [RtmpIgnore]
         public int MatchId;
     }
 }
@@ -83,13 +88,18 @@ namespace Client
 `rtmpsharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
 
 With v0.2, we've consistently seen large and significant (> 100x) improvements in throughput, as well as improvements in
-latency, GC pressure, and memory consumption. These benefits are especially seen if you are using `rtmpsharp` at scale,
-whether for large object graphs, or for tiny objects streamed in a high frequency firehouse.
+message latency, GC pressure, and memory consumption. These benefits are especially visible if you are using `rtmpsharp`
+at scale, whether it is in serializing millions of large object graphs, or for tiny objects streamed in a gigantic
+firehose.
 
-v0.2 also improves how it handles of disconnections and is a little more intelligent in serializing objects, and in
-speaking the RTMP protocol. In addition, v0.2 now spins up zero threads (down from one reader thread and one writer
-thread for every connection), so it is finally feasible to start up distinct 10,000 concurrent connections on a single
-machine.
+v0.2 also improves how it handles disconnections, is a little more intelligent in serializing objects, and in speaking
+the RTMP protocol. Overall, this means slightly reduced sizes for serialized payloads, slightly reduced network usage,
+and slightly greater compatibility with other RTMP servers. In addition, v0.2 no longer spins up dedicated connection
+worker threads (down from one reader thread and one writer thread for every connection), so it is finally feasible to
+start up distinct 10,000 concurrent connections on a single machine.
+
+Some classes have been moved into other namespaces to match their semantic meaning, rather than matching the unnatural
+placement of RTMP libraries.
 
 ## License
 

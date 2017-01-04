@@ -1,11 +1,77 @@
-# sky 1.04
+# sky 2.2
 
 include:
-  rtmp-sharp/complete:
-      csharp/complete:
-          exceptionaleventargs:
-          io:
-              streamhelper:
-              zlib:
-          methodfactory:
-          taskcallbackmanager:
+  hina, csharp:
+    options:
+      shake: true
+    items:
+      - bytespacecomparer.cs
+      - check.cs
+      - checkdebug.cs
+      - datetimeex.cs
+      - enumerableex.cs
+      - exceptionaleventargs.cs
+      - methodfactory.cs
+      - space.cs
+      - unixdatetime.cs
+
+      - collections:
+        - emptyarray.cs
+        - emptycollection.cs
+        - keydictionary.cs
+        - staticdictionary.cs
+
+        - extensions:
+          - dictionaryextensions
+          - spaceextensions
+
+      - extensions:
+        - arraysegmentextensions.cs
+        - deconstructextensions.cs
+        - stringextensions.cs
+
+      - io:
+        - bytereader.cs
+        - bytewriter.cs
+
+        - extensions:
+          - memorystreamextensions.cs
+          - streamextensions.cs
+
+        - zlib:
+          - adler32.cs
+          - zlibstream.cs
+
+      - linq:
+        - buffer.cs
+        - mapfilter.cs
+        - none.cs
+        - tokeydictionary.cs
+        - toquickdictionary.cs
+        - _hinalinq.cs
+
+      - net:
+        - socketex.cs
+        - tcpclientex.cs
+
+      - reflection:
+        - extensions:
+          - reflectionextensions.cs
+
+      - security:
+        - randomex.cs
+
+      - threading:
+        - asyncautoresetevent.cs
+        - taskcallbackmanager.cs
+
+        - extensions:
+          - taskextensions.cs
+
+  konseki, csharp:
+    options:
+      shake: true
+    items:
+      - kon.cs          +static-facade
+      - nameresolver.cs +static-facade
+      - objectdumper.cs +static-facade

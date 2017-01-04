@@ -1,93 +1,98 @@
-# rtmp-sharp
+# RtmpSharp (v0.2)
 
-A fast, lightweight library RTMP(S) client library for .NET. It's known to be in many high-traffic
-websites especially around the video game streaming and League of Legends spheres.
+A fast, lightweight, data-oriented rtmp + rtmps client library for .net desktop and .net core. used in many high-
+traffic websites and systems, especially around the game streaming and League of Legends spheres.
 
-## Example usage
-
-#### Simple server connection + make a call
+## Example Usage
 
 ```csharp
-var client = new RtmpClient(
-	new Uri("rtmps://ingress.winky.com"),
-	new SerializationContext(),
-	ObjectEncoding.Amf3);
+var context = new SerializationContext();
+var options = new RtmpClient.Options()
+{
+    // required parameters:
+    Url      = "rtmp://ingress.winky.com:1234",
+    Context  = context,
 
-// connect to the server
-await client.ConnectAsync();
+    // optional parameters:
+    AppName     = "demo-app",                                  // optional app name, passed to the remote server during connect.
+    PageUrl     = "https://example.com/rtmpsharp.demo",        // optional page url, passed to the remote server during connect.
+    SwfUrl      = "",                                          // optional swf url,  passed to the remote server during connect.
+    ChunkLength = 4192,                                        // optional outgoing rtmp chunk length.
+    Validate    = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
+};
 
-// call a remote service
-var songs = await client.InvokeAsync<string[]>("musicalService", "findSongs");
+// connect to the winky and invoke the `musical.search` service.
+var client = new RtmpClient.ConnectAsync(options);
+var songs  = await client.InvokeAsync<string[]>("musical", "search", new { name = "kiss me" });
 ```
 
-## Serialization domains
+## The Serliazation Context
 
-This section is only relevant if you are *serializing and deserializing typed
-objects*.
+The `SerializationContext` isolates different serialization domains, and holds information mappings for type
+serialization. this allows you to have separate serialization domains for different services and not worry about
+namespace collisions: twitchtv + youtube may both expose an rtmp interface, but have slightly different definitions for
+what constitutes a video object.
 
-The `SerializationContext` isolates different serialization domains to prevent
-attacks from untrusted servers. It also negates issues that occur when there
-is only a single global context: if two different domains (eg, twitch.tv and
-winky.com) both have `ServiceStatus` objects, then it would be impossible
-to tell which one to use. The `SerializationContext` allows us to specify
-different objects for each context.
+The `SerializationContext` constructor accepts an optional array of types that the instance should serialize into their
+respective concrete types. If `rtmpsharp` receives a type that isn't registered, it will by default deserialize that
+object into an `AsObject`. If you don't like this, and want to fail deserialization, then turn `AsObjectFallback` off.
+So if you do not pass it any types, then all objects will be deserialized into anonymous `AsObject`s.
 
 ```csharp
-// method one: specify the types in the constructor
-var context = new SerializationContext(types);
-
-// method two: add types in a method call
-context.Register(type);
+// constructor definition:
+//     new SerializationContext(params Type[] types);
 ```
 
-By default, the serialization context will deserialize unregistered objects to
-anonymous types; if you have an empty context, all objects will be
-deserialized to anonymous types.
-
-If you don't need statically typed objects, you can use dynamic objects for
-all objects instead:
-
+Sometimes it might be easier to use the DLR, and `AsObject`s natively support that:
 
 ```csharp
-dynamic d = await client.InvokeAsync<dynamic>(...)
+dynamic d = await client.InvokeAsync<dynamic>("greeter-service", "greet", "hello!");
+
+Console.WriteLine(d.items[0].greeting)
+// => hello!
 ```
 
-#### Object annotations
+## Type Annotations
 
-By default, `rtmp-sharp` uses an CLR type and field names for serialization.
-If you need to use a different type name on the network, you can annotate your
-code with the `SerializedName` attribute.
+By default, `rtmpsharp` will serialize all public fields and properties using their native CLR names. To instruct
+`rtmpsharp` to use a different name for serialization, simply annotate the interested types or members with the
+`RtmpSharp` attribute. Ignore a field by annotating it with `RtmpIgnore`.
 
 ```csharp
 namespace Client
 {
-    // Without annotation: `Client.WinkyServiceStatus`
-    // With annotation: `org.winky.ServiceStatus`
-    [Serializable]
-    [SerializedName("org.winky.ServiceStatus")]
+    // without annotation: `Client.WinkyServiceStatus`
+    // with annotation:    `org.winky.ServiceStatus`
+    [RtmpSharp("org.winky.ServiceStatus")]
     public class WinkyServiceStatus
     {
-        // Without annotation: `Difficulty`
-        // With annotation: `hardness`
-        [SerializedName("hardness")]
+        // without annotation: `Difficulty`
+        // with annotation:    `hardness`
+        [RtmpSharp("hardness")]
         public string Difficulty;
 
-        [SerializedName("gameId")]
+        // ignored from serialization
+        [RtmpIgnore("gameId")]
         public int MatchId;
     }
 }
 ```
 
-## Issues
+## Changes From v0.1
 
-When time allows, I'll fix these.
+`rtmpsharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
 
-- `rtmp-sharp` spawns two threads per `RtmpClient` - a reader and writer thread
-- flash shared objects aren't implemented
-- video and audio decoding isn't implemented
+With v0.2, we've consistently seen large and significant (> 100x) improvements in throughput, as well as improvements in
+latency, GC pressure, and memory consumption. These benefits are especially seen if you are using `rtmpsharp` at scale,
+whether for large object graphs, or for tiny objects streamed in a high frequency firehouse.
+
+v0.2 also improves how it handles of disconnections and is a little more intelligent in serializing objects, and in
+speaking the RTMP protocol. In addition, v0.2 now spins up zero threads (down from one reader thread and one writer
+thread for every connection), so it is finally feasible to start up distinct 10,000 concurrent connections on a single
+machine.
 
 ## License
 
-- `rtmp-sharp` is MIT licensed
-- Feel free to use it however you want
-- Please contribute any improvements you make back to this repository
+- `rtmpsharp` is MIT licensed
+- Feel free to use it in any way you wish
+- However, please contribute any improvements you make back to this repository

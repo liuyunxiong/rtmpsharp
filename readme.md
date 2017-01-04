@@ -1,6 +1,6 @@
 # RtmpSharp (v0.2)
 
-A fast, lightweight, data-oriented rtmp + rtmps client library for .net desktop and .net core. used in many high-
+A fast, lightweight, data-oriented rtmp + rtmps client library for .NET Desktop and .NET Core. Used in many high-
 traffic websites and systems, especially around the game streaming and League of Legends spheres.
 
 ## Example Usage
@@ -22,7 +22,7 @@ var options = new RtmpClient.Options()
 };
 
 // connect to the winky and invoke the `musical.search` service.
-var client = new RtmpClient.ConnectAsync(options);
+var client = RtmpClient.ConnectAsync(options);
 var songs  = await client.InvokeAsync<string[]>("musical", "search", new { name = "kiss me" });
 ```
 

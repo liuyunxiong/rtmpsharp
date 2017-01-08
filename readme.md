@@ -1,12 +1,11 @@
-# RtmpSharp (v0.2)
+# rtmp-sharp (v0.2)
 
 [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
 
-A fast, lightweight, data-oriented rtmp + rtmps client library for .NET Desktop and .NET Core. Used in many high-
+A fast, lightweight, data-oriented RTMP + RTMPS client library for .NET Desktop and .NET Core. Used in many high-
 traffic websites and systems, especially around the game streaming and League of Legends spheres.
 
 [Install from NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
-
 
 ## Example Usage
 
@@ -15,8 +14,8 @@ var context = new SerializationContext();
 var options = new RtmpClient.Options()
 {
     // required parameters:
-    Url      = "rtmp://ingress.winky.com:1234",
-    Context  = context,
+    Url         = "rtmp://ingress.winky.com:1234",
+    Context     = context,
 
     // optional parameters:
     AppName     = "demo-app",                                  // optional app name, passed to the remote server during connect.
@@ -31,7 +30,7 @@ var client = await RtmpClient.ConnectAsync(options);
 var songs  = await client.InvokeAsync<string[]>("musical", "search", new { name = "kiss me" });
 ```
 
-## The Serliazation Context
+## The Serialization Context
 
 The `SerializationContext` isolates different serialization domains, and holds information mappings for type
 serialization. this allows you to have separate serialization domains for different services and not worry about
@@ -101,8 +100,13 @@ start up distinct 10,000 concurrent connections on a single machine.
 Some classes have been moved into other namespaces to match their semantic meaning, rather than matching the unnatural
 placement of RTMP libraries.
 
+## Detailed Documentation
+
+Detailed API docs and examples are coming soon; they're temporarily blocked on the open sourcing of some internal
+documentation generation tooling.
+
 ## License
 
-- `rtmpsharp` is MIT licensed
+- This library is MIT licensed
 - Feel free to use it in any way you wish
-- However, please contribute any improvements you make back to this repository
+- Please contribute improvements back to this repository!

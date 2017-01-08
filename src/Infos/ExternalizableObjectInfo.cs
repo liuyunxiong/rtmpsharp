@@ -14,7 +14,7 @@ namespace RtmpSharp.Infos
         public ClassInfo GetClassInfo(object instance)
         {
             var type = instance.GetType();
-            
+
             return new ExternalizableClassInfo(
                 name:           context.GetCanonicalName(type.FullName),
                 members:        EmptyCollection<IMemberInfo>.Array,
@@ -27,7 +27,7 @@ namespace RtmpSharp.Infos
             public ExternalizableClassInfo(string name, IMemberInfo[] members, bool externalizable, bool dynamic)
                 : base(name, members, externalizable, dynamic) { }
 
-            public override bool TryGetMember(string name, out IMemberInfo member) 
+            public override bool TryGetMember(string name, out IMemberInfo member)
                 => throw new InvalidOperationException("attempting to access member info for externalizable object");
         }
     }

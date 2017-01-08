@@ -144,7 +144,7 @@ namespace RtmpSharp.Net
                 // successfully read and processed into a valid packet.
                 var index  = 0;
                 var reader = __readFramesFromBufferReader;
-                
+
                 // read as many frames as we can from the buffer
                 while (index < available)
                 {

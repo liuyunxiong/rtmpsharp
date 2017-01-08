@@ -37,7 +37,7 @@ namespace RtmpSharp.Infos
             public AsObjectClassInfo(string name, IMemberInfo[] members, bool externalizable, bool dynamic) : base(name, members, externalizable, dynamic)
             {
             }
-            
+
             public override bool TryGetMember(string name, out IMemberInfo member)
             {
                 member = new AsObjectMemberInfo(name);

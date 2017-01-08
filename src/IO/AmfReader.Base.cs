@@ -103,7 +103,7 @@ namespace RtmpSharp.IO
             {
                 Require(3);
                 return (uint)(temporary[0] << 16 | temporary[1] << 8 | temporary[2]);
-            }   
+            }
 
             // 64-bit IEEE-754 double precision floating point
             public unsafe double ReadDouble()

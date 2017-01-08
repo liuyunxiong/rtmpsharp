@@ -39,7 +39,7 @@ namespace RtmpSharp.IO
         {
             return core.HasLength(count);
         }
-        
+
         // efficiency: avoid re-allocating this object by re-binding it to a new buffer, effectively resetting this object.
         public void Rebind(Space<byte> span)
         {

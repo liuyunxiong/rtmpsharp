@@ -82,7 +82,7 @@ namespace Hina.IO
 
                 if (source.Length != 0)
                     pool.Return(source.Array);
-                    
+
                 var newLength = Math.Max(
                     source.Length * 2,
                     source.Length + required);

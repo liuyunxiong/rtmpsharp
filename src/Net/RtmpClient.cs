@@ -102,18 +102,18 @@ namespace RtmpSharp.Net
                             var a = param as AcknowledgeMessage;
                             callbacks.SetResult(i.InvokeId, a?.Body ?? param);
                             break;
-                    
+
                         case "_error":
                             // unwrap the flex wrapper object if it is present
                             var b = param as ErrorMessage;
                             callbacks.SetException(i.InvokeId, b != null ? new InvocationException(b) : new InvocationException());
                             break;
-                    
+
                         case "receive":
                             if (param is AsyncMessage c)
                                 InternalReceiveSubscriptionValue(c.ClientId, c.Headers.GetDefault(AsyncMessageHeaders.Subtopic) as string, c.Body);
                             break;
-                            
+
                         case "onstatus":
                             Kon.Trace("received status");
                             break;
@@ -126,7 +126,7 @@ namespace RtmpSharp.Net
                         //             Kon.Trace("unknown rtmp invoke method requested", new { method = i.MethodName, args = i.Arguments });
                         //             Debugger.Break();
                         //         });
-                        //         
+                        //
                         //         break;
 
                         default:
@@ -136,7 +136,7 @@ namespace RtmpSharp.Net
                     break;
             }
         }
-        
+
         #endregion
 
 
@@ -278,7 +278,7 @@ namespace RtmpSharp.Net
             };
 
             var response = await client.InternalCallAsync(request, chunkStreamId: 3) as AsObject;
-            
+
             return response != null && (response.TryGetValue("clientId", out var clientId) || response.TryGetValue("id", out clientId))
                 ? clientId as string
                 : null;

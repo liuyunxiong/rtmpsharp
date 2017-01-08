@@ -15,7 +15,7 @@
         public InvokeAmf0()
             : base(PacketContentType.CommandAmf0) { }
     }
-    
+
     class InvokeAmf3 : Invoke
     {
         public InvokeAmf3()

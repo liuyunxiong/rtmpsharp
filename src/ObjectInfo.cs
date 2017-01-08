@@ -9,7 +9,7 @@ namespace RtmpSharp
     class ObjectInfo
     {
         readonly SerializationContext context;
-        
+
         readonly IObjectInfo basic;
         readonly IObjectInfo externalizable;
         readonly IObjectInfo asObject;

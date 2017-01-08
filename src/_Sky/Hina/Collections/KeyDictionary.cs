@@ -58,7 +58,7 @@ namespace Hina.Collections
             }
         }
 
-        
+
 
         public void AddRange(IList<(TKey, TValue)> list)
             => AddRangeInternal(

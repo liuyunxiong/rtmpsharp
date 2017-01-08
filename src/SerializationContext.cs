@@ -18,7 +18,7 @@ namespace RtmpSharp
 
         readonly TypeRegistry registry;
         readonly ObjectInfo   infos;
-        
+
 
         public SerializationContext(params Type[] types)
         {

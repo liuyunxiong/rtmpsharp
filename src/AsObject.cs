@@ -46,8 +46,8 @@ namespace RtmpSharp
 
         internal void Replace(IEnumerable<(string key, object value)> items)
             => values = items.ToDictionary(x => x.key, x => x.value);
-        
-        
+
+
         // DynamicObject members
 
         public override IEnumerable<string> GetDynamicMemberNames()                  => values.Keys;

@@ -56,11 +56,11 @@ namespace RtmpSharp.Messaging.Messages
         // messages that need to set remote credentials for a destination carry the base64 encoded credentials in this
         // header.
         public const string RemoteCredentials = "DSRemoteCredentials";
-        
+
         // messages sent with a defined request timeout use this header.
         //
-        // the request timeout value is set on outbound messages by services or channels and the value 
-        // controls how long the corresponding MessageResponder will wait for an acknowledgement, 
+        // the request timeout value is set on outbound messages by services or channels and the value
+        // controls how long the corresponding MessageResponder will wait for an acknowledgement,
         // result or fault response for the message before timing out the request.
         public const string RequestTimeout = "DSRequestTimeout";
 

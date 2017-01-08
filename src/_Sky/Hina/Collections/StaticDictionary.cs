@@ -121,7 +121,7 @@ namespace Hina.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => throw new NotSupportedException();
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)                    => throw new NotSupportedException();
         bool IDictionary<TKey, TValue>.Remove(TKey key)                                                         => throw new NotSupportedException();
-        
+
         #endregion
 
 

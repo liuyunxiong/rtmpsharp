@@ -327,7 +327,7 @@ namespace RtmpSharp.Net
                 // size of the last chunk, in bytes, of the message currently being transmitted
                 public int MessageLength;
 
-                
+
                 // * * * * * * * * * *
                 // methods
 

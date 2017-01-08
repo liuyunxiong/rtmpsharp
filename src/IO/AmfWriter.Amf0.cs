@@ -41,7 +41,7 @@ namespace RtmpSharp.IO
 
             // writers
 
-            
+
             public void WriteItem(object value)
             {
                 if (value == null)
@@ -284,7 +284,7 @@ namespace RtmpSharp.IO
                             var values = enumerable.Cast<object>().ToArray();
                             WriteArray(values, values.Length);
                         }
-                        
+
                         break;
 
                     default:

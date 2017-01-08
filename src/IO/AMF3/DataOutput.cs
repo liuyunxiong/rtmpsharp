@@ -20,7 +20,7 @@ namespace RtmpSharp.IO.AMF3
             get => encoding;
             set => encoding = value;
         }
-        
+
         public void WriteObject(object value)
         {
             switch (encoding)

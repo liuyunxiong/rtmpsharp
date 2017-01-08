@@ -17,7 +17,7 @@ namespace RtmpSharp.IO.AMF3
         public ByteArray()                          { }
         public ByteArray(byte[] buffer)             => Buffer = new ArraySegment<byte>(buffer);
         public ByteArray(ArraySegment<byte> buffer) => Buffer = buffer;
-        
+
         // returns a copy of the underlying buffer
         public byte[] ToArray()  => Buffer.ToArray();
 

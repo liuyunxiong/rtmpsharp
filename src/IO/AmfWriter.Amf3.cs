@@ -48,7 +48,7 @@ namespace RtmpSharp.IO
             }
 
 
-            
+
             // writers
 
             public void WriteItem(object value)
@@ -60,7 +60,7 @@ namespace RtmpSharp.IO
                 else
                 {
                     var type = value.GetType();
-                
+
                     if      (Int29Types.Contains(type))                 WriteInt29(Convert.ToInt32(value));
                     else if (NumberTypes.Contains(type))                WriteDouble(Convert.ToDouble(value));
                     else if (Writers.TryGetValue(type, out var writer)) writer(this, value);
@@ -129,7 +129,7 @@ namespace RtmpSharp.IO
                 var segment = new ArraySegment<byte>(value);
                 WriteByteArray(segment);
             }
-            
+
             void WriteDateTime(DateTime value)
             {
                 WriteMarker(Marker.Date);

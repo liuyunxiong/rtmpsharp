@@ -30,7 +30,7 @@ namespace RtmpSharp
         }
 
 
-        public object CreateInstance(string name)        => CreateOrNull(name) ?? throw new InvalidOperationException($"the type \"{name}\" hasn't been registered with this context");
+        public object      CreateInstance(string name)   => CreateOrNull(name) ?? throw new InvalidOperationException($"the type \"{name}\" hasn't been registered with this context");
 
         internal object    CreateOrNull(string name)     => registry.CreateOrNull(name);
         internal bool      HasConcreteType(string name)  => registry.Exists(name);

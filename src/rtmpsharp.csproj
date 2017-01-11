@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
+    <Version>0.2.0</Version>
+    <Description>a fast and lightweight rtmp(s) client library.</Description>
+    <PackageTags>rtmp rtmps amf flex netcore</PackageTags>
+
     <TargetFramework>netstandard1.5</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

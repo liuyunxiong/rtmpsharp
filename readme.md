@@ -1,11 +1,10 @@
-# rtmp-sharp (v0.2)
+# rtmp-sharp (v0.2) [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
 
-[![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
+`rtmp-sharp` is a fast and lightweight RTMP + RTMPS library for .NET Desktop and .NET Core. [Install from NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
 
-A fast, lightweight, data-oriented RTMP + RTMPS client library for .NET Desktop and .NET Core. Used in many high-
-traffic websites and systems, especially around the game streaming and League of Legends spheres.
+This library is currently stable and used in production, serving more than 1 billion requests every month, as well as in many other large sites and applications, especially in the video game streaming and League of Legends spheres.
 
-[Install from NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
+Commercial support is optionally available: email [hello@unyaa.com](mailto:hello@unyaa.com) for more information.
 
 ## Example Usage
 
@@ -82,6 +81,11 @@ namespace Client
 }
 ```
 
+## Detailed Documentation
+
+Detailed API docs and examples are coming soon; they're temporarily blocked on the open sourcing of some internal
+documentation generation tooling.
+
 ## Changes From v0.1
 
 `rtmpsharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
@@ -99,11 +103,6 @@ start up distinct 10,000 concurrent connections on a single machine.
 
 Some classes have been moved into other namespaces to match their semantic meaning, rather than matching the unnatural
 placement of RTMP libraries.
-
-## Detailed Documentation
-
-Detailed API docs and examples are coming soon; they're temporarily blocked on the open sourcing of some internal
-documentation generation tooling.
 
 ## License
 

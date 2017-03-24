@@ -1,8 +1,10 @@
 # rtmp-sharp (v0.2) [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
 
-`rtmp-sharp` is a fast and lightweight RTMP + RTMPS library for .NET Desktop and .NET Core. [Install from NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
+`rtmp-sharp` is a fast and lightweight data-oriented RTMP(S) library for .NET Desktop and .NET Core. [Install from
+NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.
 
-This library is currently stable and used in production, serving more than 1 billion requests every month, as well as in many other large sites and applications, especially in the video game streaming and League of Legends spheres.
+This library is currently stable and used in production, serving more than 1 billion requests every month, as well as in
+many other large sites and applications, especially in the video game streaming and League of Legends spheres.
 
 Commercial support is optionally available: email [hello@unyaa.com](mailto:hello@unyaa.com) for more information.
 
@@ -18,7 +20,7 @@ var options = new RtmpClient.Options()
 
     // optional parameters:
     AppName     = "demo-app",                                  // optional app name, passed to the remote server during connect.
-    PageUrl     = "https://example.com/rtmpsharp.demo",        // optional page url, passed to the remote server during connect.
+    PageUrl     = "https://example.com/rtmpsharp/demo.html",   // optional page url, passed to the remote server during connect.
     SwfUrl      = "",                                          // optional swf url,  passed to the remote server during connect.
     ChunkLength = 4192,                                        // optional outgoing rtmp chunk length.
     Validate    = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
@@ -32,12 +34,12 @@ var songs  = await client.InvokeAsync<string[]>("musical", "search", new { name 
 ## The Serialization Context
 
 The `SerializationContext` isolates different serialization domains, and holds information mappings for type
-serialization. this allows you to have separate serialization domains for different services and not worry about
+serialization. this allows you to have separate serialization domains for different services  and not worry about
 namespace collisions: twitchtv + youtube may both expose an rtmp interface, but have slightly different definitions for
 what constitutes a video object.
 
 The `SerializationContext` constructor accepts an optional array of types that the instance should serialize into their
-respective concrete types. If `rtmpsharp` receives a type that isn't registered, it will by default deserialize that
+respective concrete types. If `rtmp-sharp` receives a type that isn't registered, it will by default deserialize that
 object into an `AsObject`. If you don't like this, and want to fail deserialization, then turn `AsObjectFallback` off.
 So if you do not pass it any types, then all objects will be deserialized into anonymous `AsObject`s.
 
@@ -46,7 +48,7 @@ So if you do not pass it any types, then all objects will be deserialized into a
 //     new SerializationContext(params Type[] types);
 ```
 
-Sometimes it might be easier to use the DLR, and `AsObject`s natively support that:
+`AsObjects` support the DLR and can thus be used with `dynamic` - this may be more convenient for some use cases.
 
 ```csharp
 dynamic d = await client.InvokeAsync<dynamic>("greeter-service", "greet", "hello!");
@@ -57,9 +59,9 @@ Console.WriteLine(d.items[0].greeting)
 
 ## Type Annotations
 
-By default, `rtmpsharp` will serialize all public fields and properties using their native CLR names. To instruct
-`rtmpsharp` to use a different name for serialization, simply annotate the interested types or members with the
-`RtmpSharp` attribute. Ignore a field by annotating it with `RtmpIgnore`.
+By default, `rtmp-sharp` will serialize all public fields and public properties using their field names. You may
+instruct `rtmp-sharp` to use a different name for serialization by simply annotating the interested types or members
+with the `RtmpSharp` attribute. Ignore a field by annotating it with `RtmpIgnore`.
 
 ```csharp
 namespace Client
@@ -88,12 +90,12 @@ documentation generation tooling.
 
 ## Changes From v0.1
 
-`rtmpsharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
+`rtmp-sharp` v0.2 is a significant upgrade from v0.1 - a large portion of the code base has been revised and rewritten.
 
 With v0.2, we've consistently seen large and significant (> 100x) improvements in throughput, as well as improvements in
-message latency, GC pressure, and memory consumption. These benefits are especially visible if you are using `rtmpsharp`
-at scale, whether it is in serializing millions of large object graphs, or for tiny objects streamed in a gigantic
-firehose.
+message latency, GC pressure, and memory consumption. These benefits are especially visible if you are using
+`rtmp-sharp` at scale, whether it is in serializing millions of large object graphs, or for tiny objects streamed in a
+gigantic firehose.
 
 v0.2 also improves how it handles disconnections, is a little more intelligent in serializing objects, and in speaking
 the RTMP protocol. Overall, this means slightly reduced sizes for serialized payloads, slightly reduced network usage,

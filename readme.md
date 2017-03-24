@@ -26,9 +26,8 @@ var options = new RtmpClient.Options()
     Validate    = (sender, certificate, chain, errors) => true // optional certificate validation callback. used only in tls connections.
 };
 
-// connect to the winky and invoke the `musical.search` service.
 var client = await RtmpClient.ConnectAsync(options);
-var songs  = await client.InvokeAsync<string[]>("musical", "search", new { name = "kiss me" });
+var exists = await client.InvokeAsync<bool>("storage", "exists", new { name = "music.pdf" });
 ```
 
 ## The Serialization Context
@@ -64,21 +63,25 @@ instruct `rtmp-sharp` to use a different name for serialization by simply annota
 with the `RtmpSharp` attribute. Ignore a field by annotating it with `RtmpIgnore`.
 
 ```csharp
-namespace Client
+namespace Winky
 {
-    // without annotation: `Client.WinkyServiceStatus`
-    // with annotation:    `org.winky.ServiceStatus`
-    [RtmpSharp("org.winky.ServiceStatus")]
-    public class WinkyServiceStatus
+    // without annotation: `Winky.StorageEntry`
+    // with annotation:    `org.winky.StorageEntry`
+    [RtmpSharp("org.winky.StorageEntry")]
+    public class StorageEntry
     {
-        // without annotation: `Difficulty`
-        // with annotation:    `hardness`
-        [RtmpSharp("hardness")]
-        public string Difficulty;
+        // without the `RtmpSharp` annotation, this field would be encoded as `Name` over the wire. with this
+        // annotation, it is instead encoded as the field `display_name`.
+        [RtmpSharp("display_name")]
+        public string Name;
 
-        // ignored from serialization
+        // this field does not have any annotations, but because it is a public field, it will still be serialized.
+        public byte[] Hash;
+
+        // this attribute directs `rtmp-sharp` to ignore this field: it will not be considered during serialization and
+        // deserialization.
         [RtmpIgnore]
-        public int MatchId;
+        public int State;
     }
 }
 ```

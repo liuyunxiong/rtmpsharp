@@ -192,7 +192,7 @@ namespace RtmpSharp.Net
             public RemoteCertificateValidationCallback Validate;
         }
 
-        public static async Task<RtmpClient> ConnectAsync(Options options)
+        public static async Task<RtmpClient> ConnectAsync(Options options, params object[] arguments)
         {
             Check.NotNull(options.Url, options.Context);
 
@@ -226,7 +226,8 @@ namespace RtmpSharp.Net
                 appName: appName,
                 pageUrl: pageUrl,
                 swfUrl:  swfUrl,
-                tcUrl:   uri.ToString());
+                tcUrl:   uri.ToString(),
+                arguments: arguments);
 
             return client;
         }
@@ -254,13 +255,13 @@ namespace RtmpSharp.Net
         }
 
         // attempts to perform an rtmp connect, and returns the client id assigned to us (if any - this may be null)
-        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl)
+        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl, params object[] arguments)
         {
             var request = new InvokeAmf0
             {
                 InvokeId   = client.NextInvokeId(),
                 MethodName = "connect",
-                Arguments  = EmptyArray<object>.Instance,
+                Arguments  = arguments,
                 Headers    = new AsObject()
                 {
                     { "app",            appName          },

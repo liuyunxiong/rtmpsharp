@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -277,7 +278,7 @@ namespace RtmpSharp.Net
                 },
             };
 
-            var response = await client.InternalCallAsync(request, chunkStreamId: 3) as AsObject;
+            var response = await client.InternalCallAsync(request, chunkStreamId: 3) as IDictionary<string, object>;
 
             return response != null && (response.TryGetValue("clientId", out var clientId) || response.TryGetValue("id", out clientId))
                 ? clientId as string

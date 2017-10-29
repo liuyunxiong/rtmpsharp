@@ -205,7 +205,7 @@ namespace RtmpSharp.Net
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
             var uri         = new Uri(url);
-            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port < 0? 1935 : uri.Port);
             var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);

@@ -43,7 +43,7 @@ namespace Hina
                 throw OutOfRangeException();
 
             this.array  = array;
-            this.offset = 0;
+            this.offset = start;
             this.length = arrayLength - start;
         }
 

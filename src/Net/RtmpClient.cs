@@ -190,6 +190,7 @@ namespace RtmpSharp.Net
             public string PageUrl;
             public string SwfUrl;
 
+            public object[] Arguments;
             public RemoteCertificateValidationCallback Validate;
         }
 
@@ -203,31 +204,29 @@ namespace RtmpSharp.Net
             var context     = options.Context;
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
-            var appName     = options.AppName;
-            var pageUrl     = options.PageUrl;
-            var swfUrl      = options.SwfUrl;
-
-
-            var uri    = new Uri(url);
-            var tcp    = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
-            var stream = await GetStreamAsync(uri, tcp.GetStream(), validate);
+            var uri         = new Uri(url);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
+            var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);
 
-            var client = new RtmpClient(context);
-            var reader = new Reader(client, stream, context, client.token);
-            var writer = new Writer(client, stream, context, client.token);
+
+            var client      = new RtmpClient(context);
+            var reader      = new Reader(client, stream, context, client.token);
+            var writer      = new Writer(client, stream, context, client.token);
 
             reader.RunAsync().Forget();
             writer.RunAsync(chunkLength).Forget();
 
             client.queue    = (message, chunkStreamId) => writer.QueueWrite(message, chunkStreamId);
             client.clientId = await RtmpConnectAsync(
-                client:  client,
-                appName: appName,
-                pageUrl: pageUrl,
-                swfUrl:  swfUrl,
-                tcUrl:   uri.ToString());
+                client:    client,
+                appName:   options.AppName,
+                pageUrl:   options.PageUrl,
+                swfUrl:    options.SwfUrl,
+                tcUrl:     uri.ToString(),
+                arguments: options.Arguments);
+
 
             return client;
         }
@@ -255,13 +254,13 @@ namespace RtmpSharp.Net
         }
 
         // attempts to perform an rtmp connect, and returns the client id assigned to us (if any - this may be null)
-        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl)
+        static async Task<string> RtmpConnectAsync(RtmpClient client, string appName, string pageUrl, string swfUrl, string tcUrl, params object[] arguments)
         {
             var request = new InvokeAmf0
             {
                 InvokeId   = client.NextInvokeId(),
                 MethodName = "connect",
-                Arguments  = EmptyArray<object>.Instance,
+                Arguments  = arguments,
                 Headers    = new AsObject()
                 {
                     { "app",            appName          },

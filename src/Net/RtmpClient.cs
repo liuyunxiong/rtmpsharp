@@ -190,10 +190,11 @@ namespace RtmpSharp.Net
             public string PageUrl;
             public string SwfUrl;
 
+            public object[] Arguments;
             public RemoteCertificateValidationCallback Validate;
         }
 
-        public static async Task<RtmpClient> ConnectAsync(Options options, params object[] arguments)
+        public static async Task<RtmpClient> ConnectAsync(Options options)
         {
             Check.NotNull(options.Url, options.Context);
 
@@ -203,32 +204,29 @@ namespace RtmpSharp.Net
             var context     = options.Context;
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
-            var appName     = options.AppName;
-            var pageUrl     = options.PageUrl;
-            var swfUrl      = options.SwfUrl;
-
-
-            var uri    = new Uri(url);
-            var tcp    = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
-            var stream = await GetStreamAsync(uri, tcp.GetStream(), validate);
+            var uri         = new Uri(url);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
+            var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);
 
-            var client = new RtmpClient(context);
-            var reader = new Reader(client, stream, context, client.token);
-            var writer = new Writer(client, stream, context, client.token);
+
+            var client      = new RtmpClient(context);
+            var reader      = new Reader(client, stream, context, client.token);
+            var writer      = new Writer(client, stream, context, client.token);
 
             reader.RunAsync().Forget();
             writer.RunAsync(chunkLength).Forget();
 
             client.queue    = (message, chunkStreamId) => writer.QueueWrite(message, chunkStreamId);
             client.clientId = await RtmpConnectAsync(
-                client:  client,
-                appName: appName,
-                pageUrl: pageUrl,
-                swfUrl:  swfUrl,
-                tcUrl:   uri.ToString(),
-                arguments: arguments);
+                client:    client,
+                appName:   options.AppName,
+                pageUrl:   options.PageUrl,
+                swfUrl:    options.SwfUrl,
+                tcUrl:     uri.ToString(),
+                arguments: options.Arguments);
+
 
             return client;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -189,6 +190,7 @@ namespace RtmpSharp.Net
             public string PageUrl;
             public string SwfUrl;
 
+            public object[] Arguments;
             public RemoteCertificateValidationCallback Validate;
         }
 
@@ -202,32 +204,28 @@ namespace RtmpSharp.Net
             var context     = options.Context;
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
-            var appName     = options.AppName;
-            var pageUrl     = options.PageUrl;
-            var swfUrl      = options.SwfUrl;
-
-
-            var uri    = new Uri(url);
-            var tcp    = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
-            var stream = await GetStreamAsync(uri, tcp.GetStream(), validate);
+            var uri         = new Uri(url);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port);
+            var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);
 
-            var client = new RtmpClient(context);
-            var reader = new Reader(client, stream, context, client.token);
-            var writer = new Writer(client, stream, context, client.token);
+
+            var client      = new RtmpClient(context);
+            var reader      = new Reader(client, stream, context, client.token);
+            var writer      = new Writer(client, stream, context, client.token);
 
             reader.RunAsync().Forget();
             writer.RunAsync(chunkLength).Forget();
 
             client.queue    = (message, chunkStreamId) => writer.QueueWrite(message, chunkStreamId);
             client.clientId = await RtmpConnectAsync(
-                client:  client,
-                appName: appName,
-                pageUrl: pageUrl,
-                swfUrl:  swfUrl,
-                tcUrl:   uri.ToString(),
-                arguments: arguments);
+                client:    client,
+                appName:   options.AppName,
+                pageUrl:   options.PageUrl,
+                swfUrl:    options.SwfUrl,
+                tcUrl:     uri.ToString(),
+                arguments: options.Arguments);
 
             return client;
         }
@@ -278,7 +276,7 @@ namespace RtmpSharp.Net
                 },
             };
 
-            var response = await client.InternalCallAsync(request, chunkStreamId: 3) as AsObject;
+            var response = await client.InternalCallAsync(request, chunkStreamId: 3) as IDictionary<string, object>;
 
             return response != null && (response.TryGetValue("clientId", out var clientId) || response.TryGetValue("id", out clientId))
                 ? clientId as string

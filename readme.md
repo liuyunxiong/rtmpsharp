@@ -1,4 +1,4 @@
-# rtmp-sharp (v0.2) [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
+# rtmp-sharp (v0.3) [![NuGet](https://img.shields.io/nuget/v/rtmpsharp.svg?style=flat-square)](https://www.nuget.org/packages/rtmpsharp)
 
 `rtmp-sharp` is a fast and lightweight data-oriented RTMP(S) library for .NET Desktop and .NET Core. [Install from
 NuGet](https://www.nuget.org/packages/rtmpsharp), or compile from source.

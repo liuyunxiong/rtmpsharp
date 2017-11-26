@@ -260,7 +260,7 @@ namespace RtmpSharp.Net
             {
                 InvokeId   = client.NextInvokeId(),
                 MethodName = "connect",
-                Arguments  = arguments,
+                Arguments  = arguments ?? EmptyArray<object>.Instance,
                 Headers    = new AsObject()
                 {
                     { "app",            appName          },

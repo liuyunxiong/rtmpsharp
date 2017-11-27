@@ -194,7 +194,7 @@ namespace RtmpSharp.Net
             public RemoteCertificateValidationCallback Validate;
         }
 
-        public static async Task<RtmpClient> ConnectAsync(Options options)
+        public static async Task<RtmpClient> ConnectAsync(Options options, params object[] arguments)
         {
             Check.NotNull(options.Url, options.Context);
 
@@ -226,7 +226,6 @@ namespace RtmpSharp.Net
                 swfUrl:    options.SwfUrl,
                 tcUrl:     uri.ToString(),
                 arguments: options.Arguments);
-
 
             return client;
         }

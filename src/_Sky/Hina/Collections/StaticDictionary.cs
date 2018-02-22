@@ -110,7 +110,7 @@ namespace Hina.Collections
 
         #region idictionary<k, v> members
 
-        IEnumerator<KeyValuePair<TKey, TValue>> Enumerator                                                      => entries.Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value)).GetEnumerator();
+        IEnumerator<KeyValuePair<TKey, TValue>> Enumerator                                                      => entries.Take(Count).Select(x => new KeyValuePair<TKey, TValue>(x.Key, x.Value)).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator()                                                                 => Enumerator;
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()         => Enumerator;
 

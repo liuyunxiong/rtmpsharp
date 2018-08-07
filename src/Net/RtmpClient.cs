@@ -20,6 +20,9 @@ namespace RtmpSharp.Net
 {
     public partial class RtmpClient
     {
+        const int RtmpDefaultPort = 1935;
+
+
         public event EventHandler<MessageReceivedEventArgs>    MessageReceived;
         public event EventHandler<ClientDisconnectedException> Disconnected;
         public event EventHandler<Exception>                   CallbackException;
@@ -205,7 +208,7 @@ namespace RtmpSharp.Net
             var validate    = options.Validate ?? ((sender, certificate, chain, errors) => true);
 
             var uri         = new Uri(url);
-            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port < 0? 1935 : uri.Port);
+            var tcp         = await TcpClientEx.ConnectAsync(uri.Host, uri.Port != -1 ? uri.Port : RtmpDefaultPort);
             var stream      = await GetStreamAsync(uri, tcp.GetStream(), validate);
 
             await Handshake.GoAsync(stream);

@@ -1,0 +1,40 @@
+bin/
+tmp/
+
+# visual studio files
+*.suo
+*.user
+.vs/
+
+# build artifacts
+[Dd]ebug/
+[Rr]elease/
+x64/
+build/
+[Bb]in/
+[Oo]bj/
+
+*_i.c
+*_p.c
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.log
+*.log
+
+# operating system files
+~$*
+*~
+Thumbs.db
+Desktop.ini
+.DS_Store

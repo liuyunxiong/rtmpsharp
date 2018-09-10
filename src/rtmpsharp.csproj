@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <Title>rtmpsharp</Title>
+    <Version>0.4.0</Version>
+    <Description>a fast and lightweight rtmp(s) client library.</Description>
+    <PackageTags>rtmp rtmps amf flex netcore</PackageTags>
+    <PackageProjectUrl>https://github.com/hinaria/rtmpsharp</PackageProjectUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Configuration">
+    <RootNamespace>RtmpSharp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="System.Buffers"   Version="4.5.0" />
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DefineConstants>$(DefineConstants);RELEASE</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+</Project>
